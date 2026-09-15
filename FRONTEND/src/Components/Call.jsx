@@ -94,7 +94,7 @@ const Call = () => {
 
             <img
               className="h-10 w-10 rounded-full object-cover"
-              src={Dean}
+              src={civil}
               alt="Dean"
             />
 
