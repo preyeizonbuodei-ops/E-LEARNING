@@ -1,10 +1,10 @@
 import { ArrowRight, Quote, GraduationCap } from 'lucide-react';
 import nuesa from '../Image/FB2.jpg';
-import Dean from '../Image/Dean.jpg';
+import Dean from '../Image/Dean.JPG';
 import { motion } from "motion/react";
 import { NavLink } from 'react-router-dom';
 
-const Call = () => {
+const Call = () => {            
 
   return (
     <motion.div className="mx-4 mt-8 mb-12 md:mx-8" 
