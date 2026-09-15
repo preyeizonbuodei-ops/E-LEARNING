@@ -1,7 +1,7 @@
 
 
-import Navbar from "../../Components/Dashbaord/UserDashboard/navbar"
-import Sidebar from "../../Components/Dashbaord/UserDashboard/sidebar"
+import Navbar from "../../Components/Dashbaord/UserDashboard/Navbar"
+import Sidebar from "../../Components/Dashbaord/UserDashboard/Nidebar"
 const UserDashboard = () => {
   return (
     <>
