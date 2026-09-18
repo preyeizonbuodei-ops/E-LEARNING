@@ -179,6 +179,13 @@ export const departments = [
                         ]
                     },
 
+                    {
+                        id: "ti giejijia",
+                        name: "je;kjdf;kajsd",
+                        image: embeded,
+                        description: "dfsadfa"
+                    },
+
                 ]
             },
 

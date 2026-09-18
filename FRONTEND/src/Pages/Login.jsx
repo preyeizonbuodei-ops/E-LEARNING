@@ -19,6 +19,8 @@ import { useNavigate } from "react-router-dom";
 
 const UserRegister = () => {
 
+    const Login = useAuthStore((state) => state.Login);
+
     const initialValues = {
         email: "",
         password: ""
@@ -28,7 +30,8 @@ const UserRegister = () => {
     const [formErrors, setFormErrors] = useState({});
     const [isSubmit, setIsSubmit] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { Login } = useAuthStore();
+    const [ serverError, setServerError ] = useState();
+
     const navigate = useNavigate();
 
     // Handle input changes
@@ -85,11 +88,15 @@ const UserRegister = () => {
             )
 
             if(response.success) {
-                navigate('/dashboard')
+                navigate('/me')
             }
         } catch (error) {
             console.log(error.response?.data?.message);
+            setServerError(error.response?.data?.message || "Something went wrong");
+            console.log(error)
+            setIsLoading(false)
         }
+        
     };
 
 
@@ -252,6 +259,7 @@ const UserRegister = () => {
                             onChange={handleChange}
                         />
 
+                        <p className="text-red-500">{formErrors.email}</p>
 
 
                         {/* Password */}
@@ -266,7 +274,7 @@ const UserRegister = () => {
                             onChange={handleChange}
                         />
 
-
+                        <p className="text-red-500">{formErrors.password}</p>
                         
 
 
@@ -309,7 +317,8 @@ const UserRegister = () => {
                             )}
 
                         </motion.button>
-
+                        
+                        <p className="text-red-500">{serverError}</p>
 
                         {/* Login */}
 
@@ -325,7 +334,7 @@ const UserRegister = () => {
 
                         <div className="flex justify-start gap-7 mt-12">
                             <h1>Don't have an Account? </h1>
-                            <NavLink className="text-amber-500 font-italisize" to="/register">Register</NavLink>
+                            <NavLink onClick={Login} className="text-amber-500 font-italisize" to="/register">Register</NavLink>
                         </div>
                         
 

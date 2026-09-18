@@ -7,7 +7,7 @@ const transport = nodeMailer.createTransport({
         pass: process.env.NODE_CODE_SENDING_EMAIL_PASSWORD
     }
 
-    
+
 })
 
 transport.verify((error, success) => {

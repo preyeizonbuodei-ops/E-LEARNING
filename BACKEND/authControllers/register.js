@@ -87,21 +87,26 @@ exports.Register = async (req, res) => {
     }
 }
 
-exports.verifyVerificationCode = async( req, res ) => {
+exports.verifyVerificationCode = async (req, res) => {
     try {
 
-        
-        
         const { email, verificationCode } = req.body;
 
         const existingUser = await User.findOne({ email });
-        if(!existingUser){
-            return res.status(404).json({ success: false, message: "User not found with this email" });
-        };
 
-        if(existingUser.isVerified){
-            return res.status(409).json({ success: false, message: "You are already a verified user" });
-        };
+        if (!existingUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found with this email"
+            });
+        }
+
+        if (existingUser.isVerified) {
+            return res.status(409).json({
+                success: false,
+                message: "You are already a verified user"
+            });
+        }
 
         const hashedCodeValue = hmacProcess(
             String(verificationCode).trim(),
@@ -115,15 +120,23 @@ exports.verifyVerificationCode = async( req, res ) => {
             });
         }
 
-        if(Date.now() > existingUser.verificationTokenExpiresAt) {
-            return res.status(400).json({ success: false, message: "Validation expired" });
+        if (Date.now() > existingUser.verificationTokenExpiresAt) {
+            return res.status(400).json({
+                success: false,
+                message: "Validation expired"
+            });
         }
-        
 
+        // Update user
         existingUser.isVerified = true;
+        existingUser.isLoggedIn = true;
+        existingUser.verificationToken = undefined;
+        existingUser.verificationTokenExpiresAt = undefined;
 
+        // Create JWT
         const token = jwt.sign(
-            {id: existingUser._id,
+            {
+                id: existingUser._id,
                 role: existingUser.role,
                 email: existingUser.email
             },
@@ -133,29 +146,44 @@ exports.verifyVerificationCode = async( req, res ) => {
             }
         );
 
-        res.cookie("authorization",  `Bearer ${token}`, {
+        // Store token in cookie
+        res.cookie("authorization", `Bearer ${token}`, {
             httpOnly: true,
-            sameSite:"Strict",
+            sameSite: "Strict",
             secure: process.env.NODE_ENV === "production",
             maxAge: 1 * 24 * 60 * 60 * 1000
-        })
+        });
 
-        existingUser.isLoggedIn = true;
-        existingUser.isVerified = true;
-        existingUser.verificationToken = undefined;
-        existingUser.verificationTokenExpiresAt = undefined;
+   
+        await existingUser.save();
 
-        await existingUser.save()
-        console.log(existingUser)
-        res.status(200).json({ success: true, message: `Logged in successfuly:  this is your token: ${token}`  })
-            console.log(`This is your token: ${token}`);
+        
+        const user = existingUser.toObject();
+
+        delete user.password;
+        delete user.confirmPassword;
+        delete user.verificationToken;
+        delete user.verificationTokenExpiresAt;
+
+        console.log("USER BEING SENT TO FRONTEND:", user);
+
+        return res.status(200).json({
+            success: true,
+            user: user,
+            message: "Logged in successfully"
+        });
 
     } catch (error) {
-        console.log(error)
-    }
+        console.log(error);
 
-    
-}
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong",
+            error: error.message
+        });
+    }
+};
+
 
 
 exports.Login = async (req, res) => {
@@ -210,7 +238,7 @@ exports.Login = async (req, res) => {
             user.isLoggedIn = true;
             await user.save();
 
-            res.status(200).json({ success: true, message: `Logged in successfuly:  this is your token: ${token}`  })
+            res.status(200).json({ success: true, user: user, message: `Logged in successfuly:  this is your token: ${token}`  })
             console.log(`This is your token: ${token}`);
 
     } catch (error) {
@@ -220,6 +248,7 @@ exports.Login = async (req, res) => {
 
 exports.Logout = async (req, res) => {
     try {
+        console.log("LOGOUT FUNCTION CALLED");
 
         const userId = req.user.id;
 
@@ -246,13 +275,15 @@ exports.Logout = async (req, res) => {
         res.clearCookie("authorization", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict"
+            sameSite: "Strict"
         });
 
         return res.status(200).json({
             success: true,
             message: "You have logged out successfully"
         });
+
+        console.lgo("you have successfully logged Out")
 
     } catch (error) {
 
@@ -269,8 +300,7 @@ exports.Logout = async (req, res) => {
 exports.ChangePassword = async( req, res ) => {
     try {
 
-        console.log("REQ.USER:", req.user);
-        console.log("REQ.ID:", req._id);
+       
         const userId = req.user.id;
         const { oldPassword, newPassword } = req.body;
 

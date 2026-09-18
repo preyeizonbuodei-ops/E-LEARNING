@@ -15,6 +15,7 @@ const ForgetPasswordSend = () => {
   const [ formErrors, setFormErrors ] = useState({});
   const [ isLoading, setIsLoading ] = useState();
   const {ForgotPassword,  error} = useAuthStore();
+  const [ serverError, setServerError ] = useState();
   const navigate = useNavigate()
 
 
@@ -46,6 +47,7 @@ const ForgetPasswordSend = () => {
     } catch (error) {
       console.log(error);
       setIsLoading(false);
+      setServerError(error.response?.data?.message || "Something went wrong");
     }
     
   }
@@ -85,12 +87,14 @@ return (
                 />
                 <p className="text-red-500 font-[9pxpx]">{formErrors.email}</p>
               </div>
+              <p className="text-red-500">{serverError}</p>
 
               <button 
                 disabled={isLoading}
                 whilehover={isLoading ? undefined : { scale: 1.02 }}
               type="submit" className="w-full py-3 rounded-lg font-semibold bg-blue-950 text-white mb-9 hover:bg-amber-500 hover:cursor-pointer mt-3 transition duration-500"
               >
+                
 
               {isLoading ? (
                       <>
@@ -100,6 +104,7 @@ return (
                         "Send Email"
                     )}
               </button>
+              
             </form>  
           </div>
         </div>

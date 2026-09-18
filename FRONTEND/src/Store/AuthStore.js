@@ -57,6 +57,25 @@ export const useAuthStore = create((set) => ({
         }
     },
 
+    getCurrentUser: async () => {
+        try {
+            const response = await axios.get(`${API_URL}/me`,);
+
+            
+
+            set({
+                user: response.data.user,
+                isAuthenticated: true
+            });
+
+            return response.data;
+
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    },
+
     Login: async (email, password) => {
 
         
@@ -67,7 +86,7 @@ export const useAuthStore = create((set) => ({
             })
 
             set({
-                user: response.data.newUser,
+                user: response.data.user,
                 isAuthenticated: true,
                 isLoading: false
             });
@@ -87,35 +106,49 @@ export const useAuthStore = create((set) => ({
 
     verifyEmailSent: async (email, verificationCode) => {
         try {
-            const response = await axios.patch(`${API_URL}/verify-verification-code`, {
-                email,
-                verificationCode
+            const response = await axios.patch(
+                `${API_URL}/verify-verification-code`,
+                {
+                    email,
+                    verificationCode
+                }
+            );
+
+            const data = response.data;
+
+            // Save the user returned from the backend
+            set({
+                user: data.user,
+                isAuthenticated: true,
             });
 
-            return response.data;
-            
+            console.log("Verified user:", data.user);
+
+            return data;
+
         } catch (error) {
-            console.log(error);
+            console.log("VERIFY ERROR:", error);
             throw error;
         }
     },
 
+
     Logout: async () => {
         try {
-            const response = await  axios.post(`${API_URL}/logout`, {
-                userId
-            })
+            const response = await axios.post(`${API_URL}/logout`);
 
             set({
+                user: null,
                 isAuthenticated: false,
                 isLoading: false,
-            })
+            });
 
             return response.data;
+            console.log("logged Out Successfully")
 
-            
         } catch (error) {
-            console.log(error)
+            console.log("Logout error:", error.response?.data);
+            throw error;
         }
     },
 

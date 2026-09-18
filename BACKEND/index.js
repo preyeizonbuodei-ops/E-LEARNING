@@ -9,7 +9,6 @@ const app = express();
 
 
 
-
 // middle wares
 app.use(cors({origin: "http://localhost:5173", credentials: true}))
 app.use(express.json());
@@ -19,7 +18,10 @@ app.get("/", (req, res) => {
     res.status(200).json({ sucess: true, message: "Welcome to the Home Page"});
     console.log("welcome to the home page");
 })
+// User Routes
 app.use("/api/v1/user", router);
+
+// Admin Routes
 app.use("/api/v1/admin", router);
 
 

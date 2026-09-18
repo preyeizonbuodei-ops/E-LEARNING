@@ -31,7 +31,7 @@ const VerifyEmail = () => {
             console.log("Verification response:", response);
 
             if(response.success) {
-                navigate("/dashboard");
+                navigate("/me");
             }else{
                 console.log("invalid email")
             }

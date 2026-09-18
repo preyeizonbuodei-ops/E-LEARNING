@@ -28,7 +28,7 @@ const ResetPassword = () => {
         }
         
         if(!values.confirmPassword) {
-            errors.confirmPassword = "Enter Forget Password"
+            errors.confirmPassword = "Enter Confirm Password"
         }
         if( values.password && 
             values.confirmPassword && 

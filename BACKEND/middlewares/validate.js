@@ -6,7 +6,7 @@ exports.ValidateUser = joi.object({
         .required()
         .min(5)
         .max(59)
-        .message({
+        .messages({
             "string.empty": "Username is required",
             "string.min": "Username must be more than 5 characters",
             "string.max": "Username must not be grater or longer than 59 characters",

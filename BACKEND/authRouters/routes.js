@@ -4,22 +4,37 @@ const { Register, Login, Logout, verifyVerificationCode, ChangePassword, ForgotP
 const { ValidateToken } = require("../middlewares/validateToken");
 const { CreateComment, GetAllComments, GetOneCommnet, UpdateComment, DeleteComment} = require("../authControllers/commentController");
 const { ConnectNews } = require("../authControllers/NewsController");
+const { CreateCourse } = require("../authControllers/Admin/CourseController");
+const { GetCourses } = require("../authControllers/CoursesUser/GetCourses");
+const { GetCurrentUser } = require("../authControllers/GetCurrentUser");
 
 
 const router = express.Router();
+
+// Admin Routes
+router.post('/create-course', CreateCourse)
 // Admin Control Routes
 // router.post("/adminRegister", AdminRegister);
 // router.post("/adminLogin", AdminLogIn);
 // router.post("/adminlogout",  ValidateToken,  AdminLogOut);
 
+
+// router.post("/createVenue", ValidateToken, CreteVenue);
+// router.get("/getAllVenues", ValidateToken, GetAllVenues);
+// router.get("/getOneVenue", ValidateToken, GetOneVenue);
+// router.put("updateVenue", ValidateToken, UpdateVenue);
+// router.delete("/deleteVenue", DeleteVenue);
+
 // user Control Routes
+router.get("/me", ValidateToken, GetCurrentUser);
 router.post("/register", Register);
 router.post("/login", Login);
 router.post("/logout", ValidateToken, Logout);
 
+// Courses Rouets
+router.get("/get-courses", ValidateToken, GetCourses)
+
 // Email Routes
-
-
 router.patch("/verify-verification-code", verifyVerificationCode);
 router.patch("/change-password", ValidateToken, ChangePassword);
 router.patch("/forgot-password",  ForgotPasswordEmail);
@@ -39,14 +54,10 @@ router.get("/me", ValidateToken, (req, res) => {
     res.status(200).json({ success: true, message: "Welcome to student page" });
 })
 
-// router.post("/createVenue", ValidateToken, CreteVenue);
-// router.get("/getAllVenues", ValidateToken, GetAllVenues);
-// router.get("/getOneVenue", ValidateToken, GetOneVenue);
-// router.put("updateVenue", ValidateToken, UpdateVenue);
-// router.delete("/deleteVenue", DeleteVenue);
 
 
 // comment routes
+
 router.post("/comment", ValidateToken, CreateComment);
 router.get("/all-comment", ValidateToken, GetAllComments);
 router.get("/get-one-commnet/:id", ValidateToken, GetOneCommnet);
