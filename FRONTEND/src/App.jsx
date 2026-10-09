@@ -1,5 +1,8 @@
 import { Route, Routes } from "react-router-dom";
-import { useAuthStore } from './Store/AuthStore'
+import { useAuthStore } from "./Store/AuthStore";
+import { useEffect } from "react";
+import { AdminRegister as adminCheck } from "./Store/AdminStore";
+
 import Home from "./Pages/Home";
 import Navbar from "./Components/Navbar";
 import About from "./Pages/About";
@@ -25,34 +28,56 @@ import StudyMaterial from "./Areas/StudyMaterial";
 import AdminSidebar from "./DashBoards/AdminDashboard/AdminPages/AdminSidebar";
 import AdminDefault from "./DashBoards/AdminDashboard/AdminPages/AdminDefault";
 import AdminDepartment from "./DashBoards/AdminDashboard/AdminPages/Department";
-
-import "./App.css";
 import AdminMajorArea from "./DashBoards/AdminDashboard/AdminPages/AdminMajorArea";
 import Topics from "./DashBoards/AdminDashboard/AdminPages/Topics";
+import CreateCourse from "./DashBoards/AdminDashboard/AdminPageForms/CreateCourseForm";
+import AdminLogin from "./Pages/AdminRegisters/AdminLogin";
+import AdminRegister from "./Pages/AdminRegisters/AdminRegister";
+import AdminVerifyEmail from "./Pages/AdminRegisters/AdminVerifyEmail";
+import CreateLessonForm from "./DashBoards/AdminDashboard/AdminPageForms/CreateLesson";
+import CreateTopicForm from "./DashBoards/AdminDashboard/AdminPageForms/CreateTopic"
 
 
-// USER ROUTE
 
-import UserLanding from './DashBoards/UserDashboard/UserPages/UserLanding'
+// USER
+import UserLanding from "./DashBoards/UserDashboard/UserPages/UserLanding";
 import UserDashBoard from "./DashBoards/UserDashboard/UserPages/UserDashBoard";
 import Courses from "./DashBoards/UserDashboard/UserPages/Courses";
-import CreateCourse from "./DashBoards/AdminDashboard/AdminPageForms/CreateCourseForm";
-import { useEffect } from "react";
+import Lessons from "./DashBoards/UserDashboard/UserPages/Component/LessonPage";
+import TopicsPage from "./DashBoards/UserDashboard/UserPages/Component/TopicPage"
+import TopicDetails from "./DashBoards/UserDashboard/UserPages/Component/TopicIdPage";                                                          
+
+
+// ROUTE PROTECTION
+import ProtectedRoute from "./ProtectedRoute";
+import GuestRoute from "./GuestRote";
+import AdminGuestRoute from "./AdminGuestRoute";
+import AdminProtectedRoute from "./AdminProtectedRoute";
+
+import "./App.css";
 
 
 function App() {
-
-    const currentLoggedInUser = useAuthStore(
-         (state) => state.getCurrentUser
-    )
+    const checkAuth = useAuthStore(
+        (state) => state.checkAuth
+    );
 
     useEffect(() => {
-        currentLoggedInUser();
-    },[currentLoggedInUser])
+        checkAuth();
+    }, []);
+
+    const AdminCheckAuth = adminCheck(
+        (state) => state.AdminCheckAuth
+    );
+
+    useEffect(() => {
+        AdminCheckAuth();
+    }, []);
+
     return (
         <Routes>
 
-            {/* ==================== WEBSITE ==================== */}
+            {/* ==================== PUBLIC ==================== */}
 
             <Route
                 path="/"
@@ -124,56 +149,56 @@ function App() {
                 }
             />
 
+            {/* ==================== GUEST ROUTES ==================== */}
 
-            {/* ==================== AUTH ==================== */}
+            <Route element={<GuestRoute />}>
 
-            <Route
-                path="/register"
-                element={
-                    <>
-                        <Navbar />
-                        <UserRegister />
-                    </>
-                }
-            />
+                <Route
+                    path="/register"
+                    element={
+                        <>
+                            <Navbar />
+                            <UserRegister />
+                        </>
+                    }
+                />
 
-            <Route
-                path="/login"
-                element={
-                    <>
-                        <Navbar />
-                        <Login />
-                    </>
-                }
-            />
+                <Route
+                    path="/login"
+                    element={
+                        <>
+                            <Navbar />
+                            <Login />
+                        </>
+                    }
+                />
 
-            <Route
-                path="/verify-email"
-                element={<VerifyEmail />}
-            />
+                <Route
+                    path="/verify-email"
+                    element={<VerifyEmail />}
+                />
 
-            <Route
-                path="/change-password"
-                element={<ChangePassword />}
-            />
+                <Route
+                    path="/change-password"
+                    element={<ChangePassword />}
+                />
 
-            <Route
-                path="/verify-forget-password"
-                element={<ForgetPasswordVerification />}
-            />
+                <Route
+                    path="/verify-forget-password"
+                    element={<ForgetPasswordVerification />}
+                />
 
-            <Route
-                path="/forget-password"
-                element={<ForgetPasswordSend />}
-            />
+                <Route
+                    path="/forget-password"
+                    element={<ForgetPasswordSend />}
+                />
 
-            <Route
-                path="/reset-password"
-                element={<ResetPassword />}
-            />
+                <Route
+                    path="/reset-password"
+                    element={<ResetPassword />}
+                />
 
-
-             
+            </Route>
 
             {/* ==================== DEPARTMENTS ==================== */}
 
@@ -192,77 +217,113 @@ function App() {
                 element={<StudyMaterial />}
             />
 
-
             {/* ==================== ADMIN ==================== */}
 
-            <Route
-                path="/admin"
-                element={<AdminSidebar />}
-            >
-                {/* /admin */}
-                <Route
-                    index
-                    element={<AdminDefault />}
-                />
-
-                {/* /admin/departments */}
-                <Route
-                    path="departments"
-                    element={<AdminDepartment />}
-                />
+            <Route element={<AdminProtectedRoute />}>
 
                 <Route
-                    path="major-areas"
-                    element={<AdminMajorArea />}
+                    path="/admin-dashboard"
+                    element={<AdminSidebar />}
+                >
+                    <Route
+                        index
+                        element={<AdminDefault />}
+                    />
+
+                    <Route
+                        path="departments"
+                        element={<AdminDepartment />}
+                    />
+
+                    <Route
+                        path="major-areas"
+                        element={<AdminMajorArea />}
+                    />
+
+                    <Route
+                        path="topics"
+                        element={<Topics />}
+                    />
+
+                </Route>
+
+                <Route
+                    path="/admin/create-course"
+                    element={<CreateCourse />}
                 />
 
                 <Route
-                    path="topics"
-                    element={<Topics />}
+                    path="/admin/create-lesson"
+                    element={<CreateLessonForm />}
                 />
+
+                <Route
+                    path="/admin/create-topic"
+                    element={<CreateTopicForm />}
+                />
+
             </Route>
 
-            <Route
-                path="/admin/create-course"
-                element={<CreateCourse />}
-            />
-            
-            {/* Student routess */}
-            
-            <Route
-                path="/departments/:departmentId"
-                element={<DepartmentDetails />}
-            />
+            {/* ==================== ADMIN GUEST ==================== */}
 
-            <Route
-                path="/areas/:departmentId/:areaId"
-                element={<AreaDetails />}
-            />
+            <Route element={<AdminGuestRoute />}>
 
-            <Route
-                path="/departments/:departmentId/:areaId/:topicId/:materialId"
-                element={<StudyMaterial />}
-            />
-
-
-            {/* ====================  student ==================== */}
-            
-            <Route
-                path="/me"
-                element={<UserDashBoard />}
-            >
-                {/* /User */}
                 <Route
-                    index
-                    element={<UserLanding />}
+                    path="/admin-register"
+                    element={<AdminRegister />}
                 />
 
-               <Route
-                    path="/me/courses"
-                    element={<Courses />}
+                <Route
+                    path="/admin-login"
+                    element={<AdminLogin />}
                 />
-                
-            </Route>            
+
+                <Route
+                    path="/admin-verify-email"
+                    element={<AdminVerifyEmail />}
+                />
+
+            </Route>
+
+            {/* ==================== STUDENT ==================== */}
+
+            <Route element={<ProtectedRoute />}>
+
+                {/* USER DASHBOARD LAYOUT */}
+                <Route element={<UserDashBoard />}>
+
+                    <Route
+                        path="/me"
+                        element={<UserLanding />}
+                    />
+
+                    <Route
+                        path="/me/courses"
+                        element={<Courses />}
+                    />
+
+                    {/* COURSE LESSONS */}
+                    <Route
+                        path="/courses/:courseId/lesson"
+                        element={<Lessons />}
+                    />
+
+                    <Route
+                        path="/lessons/:lessonId/topics"
+                        element={<TopicsPage />}
+                    />
+
+                    <Route
+                        path="/topics/:topicId"
+                        element={<TopicDetails />}
+                    />
+
+                    {/* LESSON TOPICS */}
+                    {/* We will add this after creating Topics */}
+
+                </Route>
+
+            </Route>
 
         </Routes>
     );

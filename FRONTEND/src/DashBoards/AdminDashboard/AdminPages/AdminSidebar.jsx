@@ -39,7 +39,7 @@ const AdminSidebar = () => {
                 <div className="flex flex-col gap-2 px-3">
 
                     <NavLink
-                        to="/admin"
+                        to="/admin-dashboard"
                         end
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
@@ -54,7 +54,7 @@ const AdminSidebar = () => {
                     </NavLink>
 
                     <NavLink
-                        to="/admin/departments"
+                        to="/admin-dashboard/departments"
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -64,11 +64,11 @@ const AdminSidebar = () => {
                         }
                     >
                         <Book />
-                        <h1>My Courses</h1>
+                        <h1>Departments</h1>
                     </NavLink>
 
                     <NavLink
-                        to="/admin/major-areas"
+                        to="/admin-dashboard/major-areas"
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -78,11 +78,11 @@ const AdminSidebar = () => {
                         }
                     >
                         <File  />
-                        <h1>Department</h1>
+                        <h1>Major Areas</h1>
                     </NavLink>
 
                     <NavLink
-                        to="/admin/topics"
+                        to="/admin-dashboard/topics"
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -93,7 +93,7 @@ const AdminSidebar = () => {
                     >
                         <House  />
                         <h1>
-                            Department
+                            Topics
                         </h1>
                     </NavLink>
 

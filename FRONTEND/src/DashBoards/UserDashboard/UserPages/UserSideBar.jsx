@@ -1,4 +1,4 @@
-import { useAuthStore } from '../../../Store/AuthStore' 
+import { useAuthStore } from "../../../Store/AuthStore";
 import {
     File,
     GraduationCap,
@@ -9,38 +9,84 @@ import {
     Book,
     House,
     ChartBarIncreasing,
-
+    Menu,
+    X,
 } from "lucide-react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
-const UserSideBar = () => {
+const UserSideBar = ({ isOpen, setIsOpen }) => {
     const Logout = useAuthStore((state) => state.Logout);
-  return (
-    <>
+    const navigate = useNavigate();
+    const location = useLocation();
 
-        <aside className="sticky top-0 h-screen overflow-y-auto bg-blue-950 text-white">
+    const isCoursesActive =
+        location.pathname === "/me/courses" ||
+        location.pathname.startsWith("/courses/") ||
+        location.pathname.startsWith("/lessons/");
 
-                <div className="flex items-center gap-3 p-3 mb-3 shadow-[0_2px_12px_rgba(0,0,0,0.20)]">
+    const handleNavigation = () => {
+        setIsOpen(false);
+    };
 
-                    <GraduationCap className="size-10 text-blue-500" />
+    return (
+        <>
+            {/* Mobile Menu Button */}
+            <button
+                onClick={() => setIsOpen(true)}
+                className="fixed left-4 top-4 z-40 rounded-lg bg-blue-950 p-3 text-white shadow-lg lg:hidden"
+            >
+                <Menu size={24} />
+            </button>
 
-                    <div>
-                        <h1 className="font-semibold">
-                            E-Learning
-                        </h1>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div
+                    onClick={() => setIsOpen(false)}
+                    className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                />
+            )}
 
-                        <p className="text-sm text-gray-300">
-                            Admin
-                        </p>
+            {/* Sidebar */}
+            <aside
+                className={`fixed left-0 top-0 z-50 h-screen w-[250px] overflow-y-auto bg-blue-950 text-white transition-transform duration-300 lg:sticky lg:z-auto lg:block lg:w-auto lg:translate-x-0 ${
+                    isOpen ? "translate-x-0" : "-translate-x-full"
+                }`}
+            >
+
+                {/* Header */}
+                <div className="mb-3 flex items-center justify-between gap-3 p-3 shadow-[0_2px_12px_rgba(0,0,0,0.20)]">
+
+                    <div className="flex items-center gap-3">
+                        <GraduationCap className="size-10 text-blue-500" />
+
+                        <div>
+                            <h1 className="font-semibold">
+                                E-Learning
+                            </h1>
+
+                            <p className="text-sm text-gray-300">
+                                Student
+                            </p>
+                        </div>
                     </div>
+
+                    {/* Mobile Close Button */}
+                    <button
+                        onClick={() => setIsOpen(false)}
+                        className="rounded-lg p-2 hover:bg-white/10 lg:hidden"
+                    >
+                        <X size={22} />
+                    </button>
 
                 </div>
 
                 <div className="flex flex-col gap-2 px-3">
 
+                    {/* Dashboard */}
                     <NavLink
                         to="/me"
                         end
+                        onClick={handleNavigation}
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -53,11 +99,13 @@ const UserSideBar = () => {
                         <h1>Dashboard</h1>
                     </NavLink>
 
+                    {/* My Courses */}
                     <NavLink
                         to="/me/courses"
-                        className={({ isActive }) =>
+                        onClick={handleNavigation}
+                        className={() =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
-                                isActive
+                                isCoursesActive
                                     ? "bg-white text-black"
                                     : "hover:bg-white hover:text-black"
                             }`
@@ -67,8 +115,10 @@ const UserSideBar = () => {
                         <h1>My Courses</h1>
                     </NavLink>
 
+                    {/* Learning Materials */}
                     <NavLink
                         to="/me/learning-materials"
+                        onClick={handleNavigation}
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -77,12 +127,14 @@ const UserSideBar = () => {
                             }`
                         }
                     >
-                        <File  />
+                        <File />
                         <h1>Learning Materials</h1>
                     </NavLink>
 
+                    {/* Department */}
                     <NavLink
                         to="/me/department"
+                        onClick={handleNavigation}
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -91,13 +143,14 @@ const UserSideBar = () => {
                             }`
                         }
                     >
-                        <House  />
+                        <House />
                         <h1>Department</h1>
                     </NavLink>
 
-
+                    {/* Resources */}
                     <NavLink
                         to="/me/resources"
+                        onClick={handleNavigation}
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -106,12 +159,14 @@ const UserSideBar = () => {
                             }`
                         }
                     >
-                        <ChartBarIncreasing  />
+                        <ChartBarIncreasing />
                         <h1>Resources</h1>
                     </NavLink>
 
+                    {/* Profile */}
                     <NavLink
                         to="/me/user"
+                        onClick={handleNavigation}
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -120,12 +175,14 @@ const UserSideBar = () => {
                             }`
                         }
                     >
-                        <User  />
+                        <User />
                         <h1>Profile</h1>
                     </NavLink>
 
+                    {/* Settings */}
                     <NavLink
                         to="/me/setting"
+                        onClick={handleNavigation}
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
                                 isActive
@@ -134,21 +191,27 @@ const UserSideBar = () => {
                             }`
                         }
                     >
-                        <Settings  />
+                        <Settings />
                         <h1>Setting</h1>
                     </NavLink>
 
-                    <div >
-                        
-                        <NavLink onClick={Logout} className="flex items-center gap-3 rounded py-3 px-3 hover:bg-white hover:text-black hover:cursor-pointer" to='/login'><LogOutIcon />  Logout</NavLink>
-                    </div>
+                    {/* Logout */}
+                    <button
+                        className="flex items-center justify-center gap-2 rounded py-3 px-3 hover:bg-white hover:text-black"
+                        onClick={async () => {
+                            await Logout();
+                            setIsOpen(false);
+                            navigate("/login");
+                        }}
+                    >
+                        <LogOutIcon />
+                        Logout
+                    </button>
 
                 </div>
             </aside>
-            
-    
-    </>
-  )
-}
+        </>
+    );
+};
 
-export default UserSideBar
+export default UserSideBar;

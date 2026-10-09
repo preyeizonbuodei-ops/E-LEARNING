@@ -24,3 +24,4 @@ exports.ValidateToken = (req, res, next) => {
         res.status(400).json({ success: false, message: "an error occured" });
     }
 };
+

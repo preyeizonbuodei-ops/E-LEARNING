@@ -1,17 +1,29 @@
 const mongoose = require("mongoose");
 
 const courseSchema = new mongoose.Schema({
+
     courseType: {
         type: String,
         enum: ["semester", "general"],
         required: true
     },
 
+    courseScope: {
+        type: String,
+        enum: ["shared", "department"],
+        required: function () {
+            return this.courseType === "semester";
+        }
+    },
+
     department: {
         type: String,
         trim: true,
         required: function () {
-            return this.courseType === "semester";
+            return (
+                this.courseType === "semester" &&
+                this.courseScope === "department"
+            );
         }
     },
 
@@ -32,7 +44,6 @@ const courseSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        unique: true,
         uppercase: true
     },
 
@@ -49,5 +60,16 @@ const courseSchema = new mongoose.Schema({
         trim: true
     }
 });
+
+
+courseSchema.index(
+    { courseCode: 1, department: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            courseScope: "department"
+        }
+    }
+);
 
 module.exports = mongoose.model("Course", courseSchema);

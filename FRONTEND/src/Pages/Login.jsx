@@ -312,7 +312,7 @@ const UserRegister = () => {
 
                             ) : (
 
-                                "Register"
+                                "Login"
 
                             )}
 

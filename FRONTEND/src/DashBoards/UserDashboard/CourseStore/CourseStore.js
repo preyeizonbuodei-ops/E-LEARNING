@@ -1,13 +1,14 @@
 import { create } from "zustand";
 import axios from "axios";
 
-const API_URL = "http://localhost:8000/api/v1/user";
+const API_URL = "http://localhost:8000/api/v1/admin";
 
 axios.defaults.withCredentials = true;
-
 const createCourseStore = create(() => ({
+
     addcourse: async (
         courseType,
+        courseScope,
         department,
         level,
         courseTitle,
@@ -15,11 +16,14 @@ const createCourseStore = create(() => ({
         semester,
         description
     ) => {
+
         try {
+
             const response = await axios.post(
                 `${API_URL}/create-course`,
                 {
                     courseType,
+                    courseScope,
                     department,
                     level,
                     courseTitle,
@@ -34,11 +38,37 @@ const createCourseStore = create(() => ({
             return response.data;
 
         } catch (error) {
-            console.log("CREATE COURSE ERROR:", error.response?.data || error);
+
+            console.log(
+                "CREATE COURSE ERROR:",
+                error.response?.data || error
+            );
 
             throw error;
         }
-    }
+    },
+
+
+
+        getCourses: async () => {
+            try {
+                const response = await axios.get(
+                    `${API_URL}/get-courses`
+                );
+
+                console.log("ADMIN COURSES RESPONSE:", response.data);
+
+                return response.data;
+
+            } catch (error) {
+                console.log(
+                    "GET ADMIN COURSES ERROR:",
+                    error.response?.data || error
+                );
+
+                throw error;
+            }
+        },
 }));
 
 export default createCourseStore;

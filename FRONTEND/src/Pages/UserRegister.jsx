@@ -150,7 +150,7 @@ const UserRegister = () => {
                 initial={{ opacity: 0, y: 33 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.88 }}
-                className="flex w-full max-w-5xl overflow-hidden rounded-lg bg-white shadow-[0_2px_20px_rgba(0,0,0,0.12)]"
+                className="flex w-full max-w-5xl overflow-hidden rounded-lg bg-white c"
             >
 
                 <div className="relative hidden md:block w-1/2 min-h-[700px] overflow-hidden">
@@ -404,7 +404,7 @@ const UserRegister = () => {
                                     Select Department
                                 </option>
 
-                                <option value="Mechatronics">
+                                <option value="Mechatronics Engineering">
                                     Mechatronics Engineering
                                 </option>
 
@@ -412,19 +412,19 @@ const UserRegister = () => {
                                     Mechanical Engineering
                                 </option>
 
-                                <option value="Electrical">
+                                <option value="Electrical Electronics Engineering">
                                     Electrical Electronics Engineering
                                 </option>
 
-                                <option value="Civil">
+                                <option value="Civil Engineering">
                                     Civil Engineering
                                 </option>
 
-                                <option value="Chemical">
+                                <option value="Chemical Engineering">
                                     Chemical Engineering
                                 </option>
 
-                                <option value="Petroleum">
+                                <option value="Petroleum and Gas Engineering"   >
                                     Petroleum and Gas Engineering
                                 </option>
 

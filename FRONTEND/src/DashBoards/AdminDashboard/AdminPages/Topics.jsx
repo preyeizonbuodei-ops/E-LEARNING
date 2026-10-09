@@ -28,7 +28,7 @@ const Topics = () => {
 
                     <button className="items-center flex gap-2 py-2 px-3 bg-blue-700 md:py-1 md:px-6 text-white rounded-lg">
                         <Plus size={18} />
-                        Add Topic
+                        Add Lesson
                     </button>
                 </div>
             </section>

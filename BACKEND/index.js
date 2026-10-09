@@ -3,6 +3,7 @@ const dotenv = require("dotenv").config();
 const cors = require("cors");
 const connectDB = require("./ConnectDB/ConnectDB");
 const router = require("./authRouters/routes");
+const adminRouter = require("./authRouters/adminRoutes")
 const { default: mongoose } = require("mongoose");
 const cookieparser = require('cookie-parser')
 const app = express();
@@ -19,10 +20,10 @@ app.get("/", (req, res) => {
     console.log("welcome to the home page");
 })
 // User Routes
-app.use("/api/v1/user", router);
+app.use("/api/v1/users", router);
 
 // Admin Routes
-app.use("/api/v1/admin", router);
+app.use("/api/v1/admin", adminRouter);
 
 
 
@@ -32,7 +33,7 @@ connectDB();
 // starts the server
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
-    console.log(`server is running at PORT, ${PORT} 👍👍` )
+    console.log(`server is running at PORT, ${PORT}` )
 })
 
 

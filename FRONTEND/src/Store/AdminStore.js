@@ -1,0 +1,199 @@
+import axios from "axios";
+import { create } from "zustand";
+
+const API_URL = "http://localhost:8000/api/v1/admin";
+
+axios.defaults.withCredentials = true;
+
+export const AdminRegister = create((set) => ({
+    admin: null,
+    isLoading: false,
+    isAuthenticated: false,
+    isCheckingAuth: true,
+    error: null,
+
+    // =========================
+    // ADMIN REGISTER
+    // =========================
+    register: async (
+        username,
+        email,
+        password,
+        confirmPassword,
+        adminKey
+    ) => {
+        set({
+            isLoading: true,
+            error: null
+        });
+
+        console.log("Sending registration request...");
+
+        try {
+            const response = await axios.post(`${API_URL}/register`, {
+                username,
+                email,
+                password,
+                confirmPassword,
+                adminKey
+            });
+
+            set({
+                admin: response.data.admin,
+                isAuthenticated: false,
+                isLoading: false
+            });
+
+            return response.data;
+
+        } catch (error) {
+            console.log(error);
+
+            set({
+                isLoading: false,
+                error:
+                    error.response?.data?.message ||
+                    "Registration failed try again"
+            });
+
+            throw error;
+        }
+    },
+
+
+    // =========================
+    // CHECK ADMIN AUTH
+    // =========================
+    AdminCheckAuth: async () => {
+    try {
+        const response = await axios.get(
+            `${API_URL}/admin-check-auth`
+        );
+
+        set({
+            admin: response.data.admin,
+            isAuthenticated: true,
+            isCheckingAuth: false
+        });
+
+        return response.data;
+
+        } catch (error) {
+
+            console.log("Admin auth check failed:", error);
+
+            set({
+                admin: null,
+                isAuthenticated: false,
+                isCheckingAuth: false
+            });
+
+            return null;
+        }
+    },
+
+
+    // =========================
+    // VERIFY ADMIN EMAIL
+    // =========================
+    verifyEmailSent: async (email, sentCode) => {
+        try {
+            const response = await axios.patch(
+                `${API_URL}/admin-verify-email`,
+                {
+                    email,
+                    sentCode
+                }
+            );
+
+            const data = response.data;
+
+            set({
+                admin: data.admin,
+                isAuthenticated: false
+            });
+
+            console.log("Verified admin:", data.admin);
+
+            return data;
+
+        } catch (error) {
+            console.log("VERIFY ERROR:", error);
+
+            throw error;
+        }
+    },
+
+
+    // =========================
+    // ADMIN LOGIN
+    // =========================
+    login: async (email, password, adminKey) => {
+        try {
+            const response = await axios.post(
+                `${API_URL}/login`,
+                {
+                    email,
+                    password,
+                    adminKey
+                }
+            );
+
+            set({
+                admin: response.data.user,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null
+            });
+
+            return response.data;
+
+        } catch (error) {
+            console.log(
+                "Zustand error:",
+                error.response?.data
+            );
+
+            set({
+                error:
+                    error.response?.data?.message ||
+                    "Error Logging in",
+                isLoading: false,
+                isAuthenticated: false
+            });
+
+            throw error;
+        }
+    },
+
+
+    // =========================
+    // ADMIN LOGOUT
+    // =========================
+    Logout: async () => {
+        try {
+            const response = await axios.post(
+                `${API_URL}/logout`
+            );
+
+            set({
+                admin: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null
+            });
+
+            console.log("Logged Out Successfully");
+
+            return response.data;
+
+        } catch (error) {
+            console.log(
+                "Logout error:",
+                error.response?.data
+            );
+
+            throw error;
+        }
+    }
+}));

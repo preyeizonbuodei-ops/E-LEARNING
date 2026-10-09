@@ -1,38 +1,37 @@
 const express = require("express");
-const { Register, Login, Logout, verifyVerificationCode, ChangePassword, ForgotPasswordEmail, VerifyForgotPasswordCode, ResetPassword } = require("../authControllers/register");
-// const { AdminLogOut, AdminLogIn } = require("../authControllers/adminRegister")
+const { Register, Login, Logout, verifyVerificationCode, ChangePassword, ForgotPasswordEmail, VerifyForgotPasswordCode, ResetPassword, getRefreshToken } = require("../authControllers/register");
 const { ValidateToken } = require("../middlewares/validateToken");
 const { CreateComment, GetAllComments, GetOneCommnet, UpdateComment, DeleteComment} = require("../authControllers/commentController");
 const { ConnectNews } = require("../authControllers/NewsController");
-const { CreateCourse } = require("../authControllers/Admin/CourseController");
-const { GetCourses } = require("../authControllers/CoursesUser/GetCourses");
+const { GetCourses, GetCourseById } = require("../authControllers/CoursesUser/GetCourses");
 const { GetCurrentUser } = require("../authControllers/GetCurrentUser");
-
+const { Getlesson } = require("../authControllers/CoursesUser/GetLesson");
+const { checkAuth } = require("../authControllers/CheckAuth");
+const { authorizedUserRoles,} = require("../middlewares/RoleControl");
+const { GetTopics } = require("../authControllers/Admin/TopicController");  
+const { GetTopicById } = require("../authControllers/CoursesUser/TopicContent");
 
 const router = express.Router();
 
-// Admin Routes
-router.post('/create-course', CreateCourse)
-// Admin Control Routes
-// router.post("/adminRegister", AdminRegister);
-// router.post("/adminLogin", AdminLogIn);
-// router.post("/adminlogout",  ValidateToken,  AdminLogOut);
-
-
-// router.post("/createVenue", ValidateToken, CreteVenue);
-// router.get("/getAllVenues", ValidateToken, GetAllVenues);
-// router.get("/getOneVenue", ValidateToken, GetOneVenue);
-// router.put("updateVenue", ValidateToken, UpdateVenue);
-// router.delete("/deleteVenue", DeleteVenue);
 
 // user Control Routes
-router.get("/me", ValidateToken, GetCurrentUser);
+router.get("/check-auth", ValidateToken, checkAuth)
+router.get("/me", ValidateToken, authorizedUserRoles("Student"), GetCurrentUser);
 router.post("/register", Register);
 router.post("/login", Login);
 router.post("/logout", ValidateToken, Logout);
+router.post("/refresh-token", getRefreshToken);
 
-// Courses Rouets
-router.get("/get-courses", ValidateToken, GetCourses)
+// Courses Routes
+router.get( "/get-courses", ValidateToken, authorizedUserRoles("Student"), GetCourses);
+
+router.get( "/courses/:courseId", ValidateToken, authorizedUserRoles("Student"),  GetCourseById);
+
+router.get( "/courses/:courseId/lesson", ValidateToken, authorizedUserRoles("Student"), Getlesson);
+
+router.get("/lessons/:lessonId/topics", ValidateToken, authorizedUserRoles("Student"), GetTopics)
+
+router.get("/topics/:topicId", ValidateToken, authorizedUserRoles("Student"), GetTopicById)
 
 // Email Routes
 router.patch("/verify-verification-code", verifyVerificationCode);
@@ -41,35 +40,17 @@ router.patch("/forgot-password",  ForgotPasswordEmail);
 router.patch("/verify-forgot-password", VerifyForgotPasswordCode);
 router.patch("/reset-password", ResetPassword);
 
-//Role Based Routes
-router.get("/admin", ValidateToken, (req, res) => {
-    res.status(200).json({ success: true, message: "Welcome to admin page" });
-})
-
-router.get("/class-rep", ValidateToken, (req, res) => {
-    res.status(200).json({ success: true, message: "Welcome to class-rep page" });
-})
-
-router.get("/me", ValidateToken, (req, res) => {
-    res.status(200).json({ success: true, message: "Welcome to student page" });
-})
-
 
 
 // comment routes
 
-router.post("/comment", ValidateToken, CreateComment);
-router.get("/all-comment", ValidateToken, GetAllComments);
-router.get("/get-one-commnet/:id", ValidateToken, GetOneCommnet);
-router.put("/update-comment/:id", ValidateToken, UpdateComment);
-router.delete("/delete-comment/:id", ValidateToken, DeleteComment);
+router.post("/comment", ValidateToken, authorizedUserRoles("Student"), CreateComment);
+router.get("/all-comment", ValidateToken, authorizedUserRoles("Student"), GetAllComments);
+router.get("/get-one-commnet/:id", ValidateToken, authorizedUserRoles("Student"), GetOneCommnet);
+router.put("/update-comment/:id", ValidateToken, authorizedUserRoles("Student"), UpdateComment);
+router.delete("/delete-comment/:id", ValidateToken, authorizedUserRoles("Student"), DeleteComment);
 
-router.get("/get-news", ConnectNews);
-// router.get("/getOneNews", ValidateToken, GetOneNews);
-
-
-// router.get("/pastQuestions", ValidateToken, GetPastQuestions);
-// router.post("/uploadPastQuestion", ValidateToken, UploadPastQuestions);
+router.get("/get-news", ValidateToken, authorizedUserRoles("Studnet"), ConnectNews);
 
 
 module.exports = router;

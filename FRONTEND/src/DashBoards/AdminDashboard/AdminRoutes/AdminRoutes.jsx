@@ -6,7 +6,7 @@ import Department from "../AdminPages/Department";
 const AdminRoutes = () => {
     return (
         <>
-            <Route path="/admin" element={<AdminSidebar />}>
+            <Route path="/admin-dashboard" element={<AdminSidebar />}>
                 <Route index element={<AdminDefault />} />
 
                 <Route

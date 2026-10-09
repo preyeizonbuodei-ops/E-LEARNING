@@ -1,5 +1,3 @@
-const express = require("express");
-const router = require("../authRouters/routes");
 const User = require("../modules/registerSchema");
 const mongoose = require("mongoose");
 const { ValidateUser, ValidateChangePassword } = require("../middlewares/validate");
@@ -127,13 +125,15 @@ exports.verifyVerificationCode = async (req, res) => {
             });
         }
 
-        // Update user
+        // User is now verified and automatically logged in
         existingUser.isVerified = true;
         existingUser.isLoggedIn = true;
         existingUser.verificationToken = undefined;
         existingUser.verificationTokenExpiresAt = undefined;
 
-        // Create JWT
+
+ 
+
         const token = jwt.sign(
             {
                 id: existingUser._id,
@@ -142,22 +142,47 @@ exports.verifyVerificationCode = async (req, res) => {
             },
             process.env.JWT_SECRET,
             {
-                expiresIn: "1h"
+                expiresIn: "5m"
             }
         );
 
-        // Store token in cookie
+
         res.cookie("authorization", `Bearer ${token}`, {
             httpOnly: true,
-            sameSite: "Strict",
+            sameSite: "strict",
             secure: process.env.NODE_ENV === "production",
-            maxAge: 1 * 24 * 60 * 60 * 1000
+            maxAge: 5 * 60 * 1000
         });
 
-   
-        await existingUser.save();
+
+
+
+        const refreshToken = jwt.sign(
+            {
+                id: existingUser._id,
+                role: existingUser.role,
+                email: existingUser.email
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "4d"
+            }
+        );
+
 
         
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 4 * 24 * 60 * 60 * 1000
+        });
+
+
+        await existingUser.save();
+
+
+        // Prepare user response
         const user = existingUser.toObject();
 
         delete user.password;
@@ -165,7 +190,6 @@ exports.verifyVerificationCode = async (req, res) => {
         delete user.verificationToken;
         delete user.verificationTokenExpiresAt;
 
-        console.log("USER BEING SENT TO FRONTEND:", user);
 
         return res.status(200).json({
             success: true,
@@ -174,6 +198,7 @@ exports.verifyVerificationCode = async (req, res) => {
         });
 
     } catch (error) {
+
         console.log(error);
 
         return res.status(500).json({
@@ -188,67 +213,117 @@ exports.verifyVerificationCode = async (req, res) => {
 
 exports.Login = async (req, res) => {
     try {
-        
-        // takes the required input fields for login 
+
+        // Takes the required input fields for login
         const { email, password } = req.body;
 
-        // checks if a user exist using the email
+
+        // Find user using email
         const user = await User.findOne({ email });
 
-        if(!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        };
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
 
-        // compare the password the user used to create the account and the one he's using to login if they match
+
+        // Compare passwords
         const compare = await bcrypt.compare(password, user.password);
 
-        if(!compare) {
-            return res.status(400).json({ success: false, message: "incorrect password" })
-        };
-
-        if(!user.isVerified) {
-            return res.status(409).json({ success: true, message: "please verity your account before login" })
-        }
-        
-        if(user.isLoggedIn) {
-            return res.status(409).json({ success: false, message: "you are already logged In" })
-        }
-        
-        // generate a token for the loged-in user
-        const token = jwt.sign(
-            { 
-                id: user._id, 
-                role: user.role, 
-                isVerified: user.isVerified 
-            },
-
-                process.env.JWT_SECRET) 
-            { 
-                expiresIn: "1h"
-
-            };
-
-            res.cookie( "authorization", "Bearer " + token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "strict",
-                maxAge: 1 * 24 * 60 * 60 * 1000,
+        if (!compare) {
+            return res.status(400).json({
+                success: false,
+                message: "Incorrect password"
             });
+        }
 
-            user.isLoggedIn = true;
-            await user.save();
 
-            res.status(200).json({ success: true, user: user, message: `Logged in successfuly:  this is your token: ${token}`  })
-            console.log(`This is your token: ${token}`);
+        // User must verify account before login
+        if (!user.isVerified) {
+            return res.status(409).json({
+                success: false,
+                message: "Please verify your account before login"
+            });
+        }
+        const token = jwt.sign(
+            {
+                id: user._id,
+                role: user.role,
+                email: user.email,
+                isVerified: user.isVerified
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "5m"
+            }
+        );
+
+
+        res.cookie("authorization", `Bearer ${token}`, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 5 * 60 * 1000
+        });
+
+
+        const refreshToken = jwt.sign(
+            {
+                id: user._id,
+                role: user.role,
+                email: user.email
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "4d"
+            }
+        );
+
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 4 * 24 * 60 * 60 * 1000
+        });
+
+
+        // Update login status
+        user.isLoggedIn = true;
+
+        await user.save();
+
+
+        // Prepare user response
+        const sentUser = user.toObject();
+
+        delete sentUser.password;
+        delete sentUser.confirmPassword;
+
+
+        return res.status(200).json({
+            success: true,
+            user: sentUser,
+            message: "Logged in successfully"
+        });
 
     } catch (error) {
+
         console.log(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong during login"
+        });
     }
-}
+};
+
+
 
 exports.Logout = async (req, res) => {
     try {
-        console.log("LOGOUT FUNCTION CALLED");
 
         const userId = req.user.id;
 
@@ -261,29 +336,33 @@ exports.Logout = async (req, res) => {
             });
         }
 
-        if (!existingUser.isLoggedIn) {
-            return res.status(400).json({
-                success: false,
-                message: "You are not logged in"
-            });
-        }
 
+        // Update login status
         existingUser.isLoggedIn = false;
 
         await existingUser.save();
 
+
+        // Clear access token
         res.clearCookie("authorization", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict"
+            sameSite: "strict"
         });
+
+
+        // Clear refresh token
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict"
+        });
+
 
         return res.status(200).json({
             success: true,
             message: "You have logged out successfully"
         });
-
-        console.lgo("you have successfully logged Out")
 
     } catch (error) {
 
@@ -304,7 +383,7 @@ exports.ChangePassword = async( req, res ) => {
         const userId = req.user.id;
         const { oldPassword, newPassword } = req.body;
 
-        const checking = await ValidateChangePassword.validate( { oldPassword, newPassword });
+        const checking =  ValidateChangePassword.validate( { oldPassword, newPassword });
 
         if (checking.error) {
             return res.status(400).json({
@@ -528,3 +607,62 @@ exports.ResetPassword = async( req, res ) => {
         console.log(error)
     }
 }
+
+exports.getRefreshToken = async (req, res) => {
+    try {
+         
+        //  Get refresh token from cookie
+        const { refreshToken } = req.cookies;
+
+
+        if (!refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "No refresh token was found"
+            });
+        }
+
+        //  Verify refresh token
+        const decodedUser = jwt.verify(
+            refreshToken,
+            process.env.JWT_SECRET
+        );
+        console.log("DECODED USER:", decodedUser);
+
+        // Create a new access token
+        const newAccessToken = jwt.sign(
+            {
+                id: decodedUser.id,
+                role: decodedUser.role,
+                email: decodedUser.email
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "5m"
+            }
+        );
+
+        //  Store the new access token in the authorization cookie
+        res.cookie("authorization", `Bearer ${newAccessToken}`, {
+            httpOnly: true,
+            sameSite: "Strict",
+            secure: process.env.NODE_ENV === "production",
+            mmaxAge: 5 * 60 * 1000
+        });
+
+        //  Send response
+        return res.status(200).json({
+            success: true,
+            message: "Access token refreshed successfully"
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired refresh token"
+        });
+    }
+};

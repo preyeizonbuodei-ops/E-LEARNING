@@ -14,7 +14,6 @@ const adminSchema = new mongoose.Schema({
     
     confirmPassword: {
         type: String, 
-        required: true
     },
 
     email: {
@@ -25,6 +24,10 @@ const adminSchema = new mongoose.Schema({
         type: String
     },
 
+    key: {
+        type: String,
+    },
+    
     isVerified: {
         type: Boolean,
         default: false
@@ -33,6 +36,11 @@ const adminSchema = new mongoose.Schema({
     isLoggedIn: {
         type: Boolean,
         default: false
+    },
+
+    lastLoggedIn: {
+        type: "Date",
+        default: Date.now,
     },
 
     role: {
