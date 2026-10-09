@@ -10,6 +10,9 @@ const { checkAuth } = require("../authControllers/CheckAuth");
 const { authorizedUserRoles,} = require("../middlewares/RoleControl");
 const { GetTopics } = require("../authControllers/Admin/TopicController");  
 const { GetTopicById } = require("../authControllers/CoursesUser/TopicContent");
+const { SaveMaterial, GetSavedMaterials, DeleteSavedMaterial } = require("../authControllers/CoursesUser/SaveMaterialController");
+
+
 
 const router = express.Router();
 
@@ -32,6 +35,10 @@ router.get( "/courses/:courseId/lesson", ValidateToken, authorizedUserRoles("Stu
 router.get("/lessons/:lessonId/topics", ValidateToken, authorizedUserRoles("Student"), GetTopics)
 
 router.get("/topics/:topicId", ValidateToken, authorizedUserRoles("Student"), GetTopicById)
+router.post("/save-material", ValidateToken, authorizedUserRoles("Student"), SaveMaterial)
+router.get("/saved-material", ValidateToken, authorizedUserRoles("Student"), GetSavedMaterials)
+router.delete("/saved-material/:materialId", ValidateToken, authorizedUserRoles("Student"), DeleteSavedMaterial)
+
 
 // Email Routes
 router.patch("/verify-verification-code", verifyVerificationCode);

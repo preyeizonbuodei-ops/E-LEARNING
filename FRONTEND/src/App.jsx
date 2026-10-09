@@ -46,8 +46,7 @@ import Courses from "./DashBoards/UserDashboard/UserPages/Courses";
 import Lessons from "./DashBoards/UserDashboard/UserPages/Component/LessonPage";
 import TopicsPage from "./DashBoards/UserDashboard/UserPages/Component/TopicPage"
 import TopicDetails from "./DashBoards/UserDashboard/UserPages/Component/TopicIdPage";                                                          
-
-
+import Materials from "./DashBoards/UserDashboard/UserPages/Component/ResourcesPage";
 // ROUTE PROTECTION
 import ProtectedRoute from "./ProtectedRoute";
 import GuestRoute from "./GuestRote";
@@ -55,6 +54,7 @@ import AdminGuestRoute from "./AdminGuestRoute";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 
 import "./App.css";
+
 
 
 function App() {
@@ -316,6 +316,11 @@ function App() {
                     <Route
                         path="/topics/:topicId"
                         element={<TopicDetails />}
+                    />
+
+                    <Route
+                        path="/learning-materials"
+                        element={<Materials />}
                     />
 
                     {/* LESSON TOPICS */}
