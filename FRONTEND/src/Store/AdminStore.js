@@ -80,15 +80,31 @@ export const AdminRegister = create((set) => ({
 
         } catch (error) {
 
-            console.log("Admin auth check failed:", error);
+            try {
+                await axios.post(`${API_URL}/admin-refresh-token`);
 
-            set({
-                admin: null,
-                isAuthenticated: false,
-                isCheckingAuth: false
-            });
+                const response = await axios.get(
+                    `${API_URL}/admin-check-auth`
+                );
 
-            return null;
+                set({
+                    admin: response.data.admin,
+                    isAuthenticated: true,
+                    isCheckingAuth: false
+                });
+
+                return response.data;
+
+            } catch (error) {
+                set({
+                    admin: null,
+                    isAuthenticated: false,
+                    isCheckingAuth: false
+                });
+
+                return null;
+            }
+
         }
     },
 
@@ -140,7 +156,7 @@ export const AdminRegister = create((set) => ({
             );
 
             set({
-                admin: response.data.user,
+                admin: response.data.adminr,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null

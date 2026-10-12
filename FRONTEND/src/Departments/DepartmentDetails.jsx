@@ -1,239 +1,170 @@
-import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Layers } from "lucide-react";
+import { useUserDepartmentStore } from "../DashBoards/UserDashboard/DepartmentStore/UserDepartmentStore";
 import Navbar from "../Components/Navbar";
-import AreaDetails from "../Areas/AreaDetails";
-import departments from "./departmentData";
-import { ArrowLeft } from "lucide-react";
+import Footer from "../Components/Foot";
 
-const DepartmentDetails = () => {
+
+export default function DepartmentDetails() {
     const { departmentId } = useParams();
 
-    const department = departments.find(
-        (dept) => dept.id === departmentId
-    );
+    const {
+        department,
+        majorAreas,
+        isLoading,
+        error,
+        getDepartmentById,
+    } = useUserDepartmentStore();
+
+    useEffect(() => {
+        getDepartmentById(departmentId).catch(() => {});
+    }, [departmentId, getDepartmentById]);
+
+    if (isLoading) {
+        return <div className="p-8 text-center">Loading department...</div>;
+    }
+
+    if (error) {
+        return (
+            <div className="p-8 text-center text-red-500">
+                {error}
+            </div>
+        );
+    }
 
     if (!department) {
         return (
-            <div className="flex min-h-screen items-center justify-center px-5">
-                <h1 className="text-2xl sm:text-3xl font-bold">
-                    Department not found
-                </h1>
+            <div className="p-8 text-center">
+                Department not found.
             </div>
         );
     }
 
     return (
         <>
-            
-            <section>
-                <div className="relative min-h-[85vh] sm:min-h-screen w-full overflow-hidden">
+            <Navbar />
+            <div className="min-h-screen mt-19 bg-gray-50">
+                <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
 
-                    {/* BACKGROUND IMAGE */}
-                    <img
-                        src={department.image}
-                        alt={department.name}
-                        className="
-                            absolute
-                            inset-0
-                            h-full
-                            w-full
-                            object-cover
-                        "
-                    />
-
-                
-                    <div className="
-                        absolute
-                        inset-0
-                        bg-linear-to-r
-                        from-black
-                        via-black/70
-                        to-black/30
-                    "></div>
-
-                  
-                    <div className="relative z-30">
-                        <Navbar />
-                    </div>
-
-                   
-                    <header
-                        className="
-                            relative
-                            z-20
-                            flex
-                            min-h-[calc(85vh-80px)]
-                            sm:min-h-[calc(100vh-80px)]
-                            flex-col
-                            justify-center
-                            px-5
-                            sm:px-8
-                            md:px-12
-                            lg:px-20
-                            text-white
-                        "
+                    <Link
+                        to="/departments"
+                        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600"
                     >
+                        <ArrowLeft size={18} />
+                        All Departments
+                    </Link>
 
-                        
-                        <a
-                            href="/department"
-                            className="
-                                flex
-                                items-center
-                                gap-2
-                                text-gray-300
-                                hover:text-white
-                                transition
-                                duration-300
-                                w-fit
-                                mb-4
-                                text-sm
-                                sm:text-base
-                            "
-                        >
-                            <ArrowLeft size={18} />
-                            Back to Department
-                        </a>
+                    {/* Department Information */}
+                    <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                        {department.image && (
+                            <img
+                                src={department.image}
+                                alt={department.name}
+                                className="h-64 w-full object-cover sm:h-80"
+                            />
+                        )}
 
-                       
-                        <h1
-                            className="
-                                font-bold
-                                text-3xl
-                                sm:text-4xl
-                                md:text-5xl
-                                lg:text-6xl
-                                xl:text-7xl
-                                leading-tight
-                                max-w-4xl
-                            "
-                        >
-                            {department.name}
-                        </h1>
+                        <div className="p-6 sm:p-10">
+                            <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-blue-600">
+                                Engineering Department
+                            </p>
 
-                        
-                        <p
-                            className="
-                                mt-4
-                                text-sm
-                                sm:text-base
-                                md:text-lg
-                                text-gray-200
-                                leading-7
-                                max-w-xl
-                            "
-                        >
-                            {department.description}
-                        </p>
+                            <h1 className="mb-5 text-3xl font-bold text-gray-900 sm:text-4xl">
+                                {department.name}
+                            </h1>
 
-                    </header>
+                            <h2 className="mb-3 text-xl font-semibold text-gray-800">
+                                About the Department
+                            </h2>
+
+                            <p className="leading-8 text-gray-600">
+                                {department.description}
+                            </p>
+
+                            <h2 className="mb-3 mt-8 text-xl font-semibold text-gray-800">
+                                History
+                            </h2>
+
+                            <p className="whitespace-pre-line leading-8 text-gray-600">
+                                {department.history}
+                            </p>
+                        </div>
+                    </section>
+
+                    {/* Major Areas */}
+                    <section className="mt-14">
+                        <div className="mb-8">
+                            <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">
+                                Explore Your Field
+                            </p>
+
+                            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                                Major Areas
+                            </h2>
+
+                            <p className="mt-3 text-gray-600">
+                                Explore the different areas of {department.name}.
+                            </p>
+                        </div>
+
+                        {majorAreas.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+                                <Layers
+                                    size={36}
+                                    className="mx-auto mb-4 text-gray-400"
+                                />
+
+                                <h3 className="text-lg font-semibold text-gray-800">
+                                    No Major Areas Yet
+                                </h3>
+
+                                <p className="mt-2 text-gray-500">
+                                    Major areas for this department will appear here once they are added.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                {majorAreas.map((area) => (
+                                    <article
+                                        key={area._id}
+                                        className="overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
+                                    >
+                                        {area.image && (
+                                            <img
+                                                src={area.image}
+                                                alt={area.name}
+                                                className="h-48 w-full object-cover"
+                                            />
+                                        )}
+
+                                        <div className="p-6">
+                                            <h3 className="text-xl font-bold text-gray-900">
+                                                {area.name}
+                                            </h3>
+
+                                            <p className="mt-3 line-clamp-3 leading-7 text-gray-600">
+                                                {area.description}
+                                            </p>
+
+                                            <Link
+                                                to={`/major-areas/${area._id}`}
+                                                className="mt-5 inline-flex items-center gap-2 font-semibold text-blue-600 hover:text-blue-800"
+                                            >
+                                                Explore Major Area
+                                                <ArrowRight size={18} />
+                                            </Link>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+                    </section>
                 </div>
-            </section>
+            </div>
 
-
-          
-            <main
-                className="
-                    shadow-[0_2px_12px_rgba(0,0,0,0.12)]
-                    mx-4
-                    sm:mx-6
-                    md:mx-10
-                    lg:mx-16
-                    xl:mx-26
-                    mt-6
-                    sm:mt-8
-                    p-5
-                    sm:p-7
-                    lg:p-8
-                    rounded-lg
-                "
-            >
-
-                <h1
-                    className="
-                        text-2xl
-                        sm:text-3xl
-                        font-semibold
-                        mb-4
-                    "
-                >
-                    About {department.name}
-                </h1>
-
-                <p
-                    className="
-                        leading-7
-                        sm:leading-8
-                        text-gray-400
-                        mb-4
-                        text-sm
-                        sm:text-base
-                    "
-                >
-                    {department.description}
-                </p>
-
-                <p
-                    className="
-                        text-gray-500
-                        leading-7
-                        text-sm
-                        sm:text-base
-                    "
-                >
-                    <span
-                        className="
-                            font-bold
-                            text-base
-                            sm:text-lg
-                            text-black
-                        "
-                    >
-                        History Of {department.name}:
-                    </span>{" "}
-                    {department.history}
-                </p>
-
-                <a
-                    className="
-                        inline-block
-                        mt-3
-                        text-blue-500
-                        hover:text-blue-700
-                        transition
-                    "
-                    href="#"
-                >
-                    Read more...
-                </a>
-
-            </main>
-
-
-           
-            <section className="mt-8 sm:mt-10">
-
-                <h1
-                    className="
-                        text-2xl
-                        sm:text-3xl
-                        font-semibold
-                        mx-4
-                        sm:mx-6
-                        md:mx-10
-                        lg:mx-16
-                        xl:mx-23
-                        mb-5
-                    "
-                >
-                    Major Areas
-                </h1>
-
-                {/* THIS DISPLAYS THE AREAS */}
-                <AreaDetails department={department} />
-
-            </section>
+            <Footer />
         </>
     );
-};
-
-export default DepartmentDetails;
+    
+}

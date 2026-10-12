@@ -1,254 +1,587 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken')
-const crypto = require ('crypto')
-const {ValidateAdmin}  = require('../middlewares/validateAdmin');
-const  Admin = require('../modules/adminSchema');
-const bcrypt = require('bcrypt');
-// const { ValidateChangePassword } = require('../middlewares/validate');
-const transport = require('../middlewares/sendMail');
-const { hmacProcess } = require('../utils/hashing');
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const bcrypt = require("bcrypt");
 
+const { ValidateAdmin } = require("../middlewares/validateAdmin");
+const Admin = require("../modules/adminSchema");
+const transport = require("../middlewares/sendMail");
+const { hmacProcess, DoHash } = require("../utils/hashing");
 
+const isProduction = process.env.NODE_ENV === "production";
 
-exports.AdminRegister = async( req, res ) => {
-    try {
+const adminCookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "strict",
+    path: "/"
+};
 
-        
-        // accepts inputs from the user
-        const { email, username, password, role, confirmPassword, adminKey,  isLoggedIn, isVerified, lastLoggedIn, key } = req.body;
+const clearAdminCookies = (res) => {
+    res.clearCookie("adminAuthorization", adminCookieOptions);
+    res.clearCookie("adminRefreshToken", adminCookieOptions);
+};
 
-        // validate the users inputs
-        const { error } = ValidateAdmin.validate( {email, username, password, confirmPassword } );
+const getSafeAdmin = (admin) => ({
+    id: admin._id.toString(),
+    username: admin.username,
+    email: admin.email,
+    role: admin.role,
+    isVerified: admin.isVerified,
+    isLoggedIn: admin.isLoggedIn,
+    lastLoggedIn: admin.lastLoggedIn
+});
 
-        if(error) {
-            return res.status(400).json({ success: false, message: error.details[0].message })
-        };
+const isEmailAccepted = (mailInfo, email) => {
+    return mailInfo?.accepted?.some(
+        (address) =>
+            String(address).toLowerCase() === email.toLowerCase()
+    );
+};
 
-        // check if there is an already existingUser
-        const existingUser = await Admin.findOne( {email});
+const sendControllerError = (res, error, label) => {
+    console.error(`${label}:`, error);
 
-        if(existingUser) {
-            return res.status(409).json({ success: false, message: "User already exists" })
-        };
-
-        const ADMIN_KEY = process.env.ADMIN_KEY;
-
-        ;
-        if(adminKey !== ADMIN_KEY) {
-            return res.status(400).json({ success: false, message: "invalid admin registeration key" })
-        }
-
-        // checks if the password and the confirmPassword matches
-        if(password !== confirmPassword) {
-            return res.status(409).json({ success: false, message: "password dosen't match" });
-        };
-
-        // hash the password passed by the user to save in the database
-        const hashedPassword = await bcrypt.hash(password, 12);
-
-        // Creates a verification Code to send to to the email
-        const  verificationCode  = Math.floor(100000 + Math.random() * 900000).toString();
-
-        const verificationCodeExpiresAt = Date.now() + 24 * 60 *60 *1000;
-
-        const newAdmin = new Admin ({
-            username,
-            password: hashedPassword,
-            email,
-            role,
-            isVerified,
-            isLoggedIn,
-            lastLoggedIn,
-            verificationCode,
-            key,
-            verificationCodeExpiresAt
+    if (error.code === 11000) {
+        return res.status(409).json({
+            success: false,
+            message: "An admin account with this email already exists"
         });
-
-        // sends the verification mail to the provided email by the user.
-        const sendMail = await transport.sendMail({
-            from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
-            to: newAdmin.email,
-            subject: "Email Verification Code",
-            html: `<h1>${verificationCode}</h1>`
-        })
-        
-        // Check if the mail was successfully sent.
-        if(sendMail.accepted[0] === newAdmin.email) {
-            const hashedCodeValue = hmacProcess(verificationCode, process.env.HMAC_VERIFICATION_CODE_SECRET)
-            newAdmin.verificationCode = hashedCodeValue;
-
-        }
-
-
-        // saves the new user
-        await newAdmin.save()
-        res.status(201).json({ success: true, message: "Your Account has been created successfully, Check Email for verification code" })
-    } catch (error) {
-        console.log(error)
     }
 
-}
+    return res.status(500).json({
+        success: false,
+        message: "An unexpected server error occurred"
+    });
+};
+
+const getVerificationSecret = () => {
+    const secret = process.env.HMAC_VERIFICATION_CODE_SECRET;
+
+    if (!secret) {
+        throw new Error("HMAC_VERIFICATION_CODE_SECRET is not configured");
+    }
+
+    return secret;
+};
 
 
-exports.adminVerifyVerificationCode = async( req, res ) => {
+// 1. REGISTER ADMIN
+// POST /register
 
+exports.AdminRegister = async (req, res) => {
+    try {
+        const {
+            username,
+            email,
+            password,
+            confirmPassword,
+            adminKey
+        } = req.body;
+
+        const { error } = ValidateAdmin.validate({
+            username,
+            email,
+            password,
+            confirmPassword
+        });
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: error.details[0].message
+            });
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Passwords do not match"
+            });
+        }
+
+        if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
+            return res.status(403).json({
+                success: false,
+                message: "Invalid Admin Key"
+            });
+        }
+
+        if (!process.env.NODE_CODE_SENDING_EMAIL_ADDRESS) {
+            throw new Error("Admin verification email address is not configured");
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const existingAdmin = await Admin.findOne({
+            email: normalizedEmail
+        });
+
+        if (existingAdmin) {
+            return res.status(409).json({
+                success: false,
+                message: "Email already exists. Try another email."
+            });
+        }
+
+        const hashedPassword = await DoHash(password, 10);
+
+        const verificationCode = crypto
+            .randomInt(100000, 1000000)
+            .toString();
+
+        const verificationToken = hmacProcess(
+            verificationCode,
+            getVerificationSecret()
+        );
+
+        const verificationTokenExpiresAt =
+            Date.now() + 24 * 60 * 60 * 1000;
+
+        const newAdmin = new Admin({
+            username: username.trim(),
+            email: normalizedEmail,
+            password: hashedPassword,
+            role: "Admin",
+            isLoggedIn: false,
+            isVerified: false,
+            verificationToken,
+            verificationTokenExpiresAt
+        });
+
+        const mailInfo = await transport.sendMail({
+            from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+            to: normalizedEmail,
+            subject: "StudStore Admin Email Verification",
+            text: `Your StudStore admin verification code is: ${verificationCode}. It expires in 24 hours.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 24px;">
+                    <h2>Verify your StudStore admin account</h2>
+                    <p>Use the verification code below:</p>
+                    <h1 style="letter-spacing: 6px;">${verificationCode}</h1>
+                    <p>This code expires in 24 hours.</p>
+                    <p>If you did not request this account, ignore this email.</p>
+                </div>
+            `
+        });
+
+        if (!isEmailAccepted(mailInfo, normalizedEmail)) {
+            return res.status(502).json({
+                success: false,
+                message: "Verification email could not be delivered. Please try again."
+            });
+        }
+
+        await newAdmin.save();
+
+        return res.status(201).json({
+            success: true,
+            admin: getSafeAdmin(newAdmin),
+            message: "Registration successful. Check your email for the verification code."
+        });
+    } catch (error) {
+        return sendControllerError(res, error, "ADMIN REGISTRATION ERROR");
+    }
+};
+
+
+// 2. VERIFY ADMIN EMAIL AND SEND PASSKEY
+// PATCH /admin-verify-email
+
+exports.adminVerifyVerificationCode = async (req, res) => {
     try {
         const { email, sentCode } = req.body;
-        console.log("VERIFY BODY:", req.body);
-        console.log("EMAIL:", email);
 
-        const existingAdmin = await Admin.findOne({ email });
-
-        if(!existingAdmin) {
-            return res.status(400).json({ success: false, messasge: "No User found" });
-        };
-
-        // checks if the user is aready a verified user
-        if(existingAdmin.isVerified) {
-            return res.status(409).json({ success: false, message: "You are already a verified User" })
+        if (!email || !sentCode) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and verification code are required"
+            });
         }
 
-        // hash the sent code the user sends
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const existingAdmin = await Admin.findOne({
+            email: normalizedEmail
+        }).select("+verificationToken +verificationTokenExpiresAt +key");
+
+        if (!existingAdmin) {
+            return res.status(404).json({
+                success: false,
+                message: "No admin account found"
+            });
+        }
+
+        if (existingAdmin.isVerified) {
+            return res.status(409).json({
+                success: false,
+                message: "This account has already been verified"
+            });
+        }
+
+        if (
+            !existingAdmin.verificationTokenExpiresAt ||
+            Date.now() > new Date(
+                existingAdmin.verificationTokenExpiresAt
+            ).getTime()
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Verification code has expired. Please register again or request a new code."
+            });
+        }
+
         const hashedCodeValue = hmacProcess(
-            String(sentCode).trim(), 
-            process.env.HMAC_VERIFICATION_CODE_SECRET);
+            String(sentCode).trim(),
+            getVerificationSecret()
+        );
 
-        // check if code the user sent matches with the stored Value
-        if(hashedCodeValue !== existingAdmin.verificationCode) {
-            return res.status(400).json({ success: false, message: " Incorrect Verification Code " });
-        };
-
-        // if the token has expired
-        if(Date.now() > existingAdmin.verificationCodeExpiresAt) {
-            return res.status(400).json({ sucess: false, message: "Verification Code Expired" })
+        if (hashedCodeValue !== existingAdmin.verificationToken) {
+            return res.status(400).json({
+                success: false,
+                message: "Incorrect verification code"
+            });
         }
 
-        const adminPasskey = crypto.randomBytes(12).toString('hex');
+        const adminPasskey = crypto.randomBytes(12).toString("hex");
 
-        
-
-        const sendPasskey = await transport.sendMail({
+        const mailInfo = await transport.sendMail({
             from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
-            to: existingAdmin.email,
-            subject: "admin Passkey",
-            html: `<h2>  Please keep this key secure and don't share to third party </h2>`,
-            html: `<h2> ${adminPasskey} </h2>`
-        })
+            to: normalizedEmail,
+            subject: "StudStore Admin Passkey",
+            text: `Your admin passkey is: ${adminPasskey}. Keep it secure and never share it.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 24px;">
+                    <h2>Your StudStore Admin Passkey</h2>
+                    <p>Keep this key secure and never share it with anyone.</p>
+                    <div style="padding: 16px; background: #f1f5f9; font-size: 20px; font-weight: bold; word-break: break-all;">
+                        ${adminPasskey}
+                    </div>
+                    <p>You will need this passkey when logging in as an administrator.</p>
+                </div>
+            `
+        });
 
-        if(sendPasskey.accepted[0] === existingAdmin.email) {
-            const hashedPasskey = hmacProcess(adminPasskey, process.env.HMAC_VERIFICATION_CODE_SECRET)
-            existingAdmin.key = hashedPasskey;
+        if (!isEmailAccepted(mailInfo, normalizedEmail)) {
+            return res.status(502).json({
+                success: false,
+                message: "The admin passkey email could not be delivered. Please try again."
+            });
         }
+
+        existingAdmin.key = hmacProcess(
+            adminPasskey,
+            getVerificationSecret()
+        );
 
         existingAdmin.isVerified = true;
+        existingAdmin.verificationToken = undefined;
+        existingAdmin.verificationTokenExpiresAt = undefined;
+
         await existingAdmin.save();
-        
 
         return res.status(200).json({
             success: true,
-            admin: existingAdmin,
-            message: "Email verified successfully. Admin passkey has been sent to your email."
+            admin: getSafeAdmin(existingAdmin),
+            message: "Email verified successfully. Your admin passkey has been sent to your email."
         });
     } catch (error) {
-        console.log(error)
+        return sendControllerError(
+            res,
+            error,
+            "ADMIN EMAIL VERIFICATION ERROR"
+        );
     }
-}
+};
 
-exports.AdminLogIn = async ( req, res ) => {
+
+// 3. ADMIN LOGIN
+// POST /login
+
+exports.AdminLogIn = async (req, res) => {
     try {
+        const { email, password, adminKey } = req.body;
 
-        const { email, password, adminKey } = req.body
+        if (!email || !password || !adminKey) {
+            return res.status(400).json({
+                success: false,
+                message: "Email, password and admin passkey are required"
+            });
+        }
 
-        const existingAdmin = await Admin.findOne({ email })
+        const existingAdmin = await Admin.findOne({
+            email: email.trim().toLowerCase()
+        }).select("+password +key");
 
-        if(!existingAdmin) {
-            return res.status(404).json({ success: false, message: "No Admin found, try again" });
+        if (!existingAdmin) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
+        }
+
+        if (!existingAdmin.isVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "Please verify your account first"
+            });
+        }
+
+        const passwordMatches = await bcrypt.compare(
+            password,
+            existingAdmin.password
+        );
+
+        if (!passwordMatches) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
+        }
+
+        if (!existingAdmin.key) {
+            return res.status(403).json({
+                success: false,
+                message: "Admin passkey has not been configured"
+            });
+        }
+
+        const hashedPasskey = hmacProcess(
+            String(adminKey).trim(),
+            getVerificationSecret()
+        );
+
+        if (hashedPasskey !== existingAdmin.key) {
+            return res.status(401).json({
+                success: false,
+                message: "Incorrect Admin Passkey"
+            });
+        }
+
+        if (!process.env.JWT_SECRET) {
+            throw new Error("JWT_SECRET is not configured");
+        }
+
+        const payload = {
+            id: existingAdmin._id.toString(),
+            email: existingAdmin.email,
+            role: existingAdmin.role
         };
 
-        if(existingAdmin.isLoggedIn) {
-            return res.status(409).json({ success: false, message: "You are already Logged in" })
-        };
+        const adminToken = jwt.sign(
+            {
+                ...payload,
+                tokenType: "admin-access"
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "4h" }
+        );
 
-        if(!existingAdmin.isVerified) {
-            return res.status(409).json({ success: false, message: "Verify your Account" })
-        }
+        const refreshSecret =
+            process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
 
-        const compare = await bcrypt.compare(password, existingAdmin.password)
+        const adminRefreshToken = jwt.sign(
+            {
+                ...payload,
+                tokenType: "admin-refresh"
+            },
+            refreshSecret,
+            { expiresIn: "4d" }
+        );
 
-        if(!compare) {
-            return res.status(400).json({ success: false, message: "incorrect password" })
-        }
+        res.cookie(
+            "adminAuthorization",
+            `Bearer ${adminToken}`,
+            {
+                ...adminCookieOptions,
+                maxAge: 4 * 60 * 60 * 1000
+            }
+        );
 
-    const hashingAdminKey = hmacProcess(String(adminKey).trim(), process.env.HMAC_VERIFICATION_CODE_SECRET);
+        res.cookie(
+            "adminRefreshToken",
+            adminRefreshToken,
+            {
+                ...adminCookieOptions,
+                maxAge: 4 * 24 * 60 * 60 * 1000
+            }
+        );
 
-    if(hashingAdminKey !== existingAdmin.key) {
-        return res.status(400).json({ success: false, message: "incorrect Key" })
-    };
-
-    const adminToken =  jwt.sign(
-        {
-        id: existingAdmin._id,
-        email: existingAdmin.email,
-        role: existingAdmin.role
-    }, process.env.JWT_SECRET,
-    {
-        expiresIn: "4h"
-    })
-    
-    res.cookie("adminAuthorization", `Bearer ${adminToken}`, {
-        httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 4 * 60 * 60 * 1000
-
-    })
-
-    existingAdmin.isLoggedIn = true,
-    await existingAdmin.save();
-
-    const loggedInAdmin = existingAdmin.toObject();
-
-    delete loggedInAdmin.password,
-    delete loggedInAdmin.adminKey
-
-    res.status(200).json({ success: true, admin: loggedInAdmin, message: "logged in successfully" })
-  } catch(error) {
-    console.log(error)
-  }
-}
-
-exports.AdminLogOut = async ( req, res ) => {
-    try {
-        const adminId = req.admin.id
-
-        const existingAdmin = await  Admin.findById(adminId);
-
-        if(!existingAdmin) {
-            return res.status(404).json({ success: false, message: "No Account found" })
-        }
-
-        if(!existingAdmin.isLoggedIn) {
-            return res.status(400).json({ success: false, message: "You are not loggedin" })
-        }
-        
-        existingAdmin.isLoggedIn = false;
-        
+        existingAdmin.isLoggedIn = true;
+        existingAdmin.lastLoggedIn = new Date();
 
         await existingAdmin.save();
 
-        res.clearCookie("adminAuthorization", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict"
-        })
-
-        res.status(200).json({ success: true, message: "Logged Out successfully" })
-
+        return res.status(200).json({
+            success: true,
+            admin: getSafeAdmin(existingAdmin),
+            message: "Logged in successfully"
+        });
     } catch (error) {
-        return res.status(401).json({
+        return sendControllerError(res, error, "ADMIN LOGIN ERROR");
+    }
+};
+
+
+// 4. ADMIN LOGOUT
+// POST /logout
+// Requires ValidateAdminToken
+
+exports.AdminLogOut = async (req, res) => {
+    try {
+        const adminId = req.admin?.id || req.admin?._id;
+
+        if (!adminId) {
+            clearAdminCookies(res);
+
+            return res.status(401).json({
+                success: false,
+                message: "Admin authentication is required"
+            });
+        }
+
+        const existingAdmin = await Admin.findById(adminId);
+
+        if (existingAdmin) {
+            existingAdmin.isLoggedIn = false;
+            await existingAdmin.save();
+        }
+
+        clearAdminCookies(res);
+
+        return res.status(200).json({
+            success: true,
+            message: "Logged out successfully"
+        });
+    } catch (error) {
+        console.error("ADMIN LOGOUT ERROR:", error);
+        clearAdminCookies(res);
+
+        return res.status(500).json({
             success: false,
-            message: "Invalid or expired admin token"
+            message: "An error occurred during admin logout"
         });
     }
-}
+};
+
+
+// 5. REFRESH ADMIN ACCESS TOKEN
+// POST /admin-refresh-token
+
+exports.GetAdminRefreshToken = async (req, res) => {
+    try {
+        const { adminRefreshToken } = req.cookies || {};
+
+        if (!adminRefreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "No admin refresh token found"
+            });
+        }
+
+        const refreshSecret =
+            process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+
+        if (!refreshSecret || !process.env.JWT_SECRET) {
+            throw new Error("JWT secrets are not configured");
+        }
+
+        const decodedAdmin = jwt.verify(
+            adminRefreshToken,
+            refreshSecret
+        );
+
+        if (decodedAdmin.tokenType !== "admin-refresh") {
+            clearAdminCookies(res);
+
+            return res.status(401).json({
+                success: false,
+                message: "Invalid admin refresh token"
+            });
+        }
+
+        const existingAdmin = await Admin.findById(decodedAdmin.id);
+
+        if (!existingAdmin || !existingAdmin.isVerified) {
+            clearAdminCookies(res);
+
+            return res.status(401).json({
+                success: false,
+                message: "Admin account is unavailable or unverified"
+            });
+        }
+
+        const newAccessToken = jwt.sign(
+            {
+                id: existingAdmin._id.toString(),
+                email: existingAdmin.email,
+                role: existingAdmin.role,
+                tokenType: "admin-access"
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "4h" }
+        );
+
+        res.cookie(
+            "adminAuthorization",
+            `Bearer ${newAccessToken}`,
+            {
+                ...adminCookieOptions,
+                maxAge: 4 * 60 * 60 * 1000
+            }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin access token refreshed successfully"
+        });
+    } catch (error) {
+        console.error("ADMIN REFRESH ERROR:", error);
+        clearAdminCookies(res);
+
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired admin refresh token"
+        });
+    }
+};
+
+
+// 6. CHECK ADMIN AUTHENTICATION
+// GET /admin-check-auth
+// Requires ValidateAdminToken
+
+exports.AdminCheckAuth = async (req, res) => {
+    try {
+        const adminId = req.admin?.id || req.admin?._id;
+
+        if (!adminId) {
+            return res.status(401).json({
+                success: false,
+                message: "Admin authentication is required"
+            });
+        }
+
+        const existingAdmin = await Admin.findById(adminId);
+
+        if (!existingAdmin || !existingAdmin.isVerified) {
+            clearAdminCookies(res);
+
+            return res.status(401).json({
+                success: false,
+                message: "Admin account is unavailable or unverified"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            admin: getSafeAdmin(existingAdmin),
+            message: "Admin authentication verified"
+        });
+    } catch (error) {
+        return sendControllerError(
+            res,
+            error,
+            "ADMIN AUTH CHECK ERROR"
+        );
+    }
+};

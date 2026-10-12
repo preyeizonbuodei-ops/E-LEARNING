@@ -150,7 +150,7 @@ const UserRegister = () => {
                 initial={{ opacity: 0, y: 33 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.88 }}
-                className="flex w-full max-w-5xl overflow-hidden rounded-lg bg-white c"
+                className="flex w-full max-w-5xl overflow-hidden mt-15 rounded-lg bg-white c"
             >
 
                 <div className="relative hidden md:block w-1/2 min-h-[700px] overflow-hidden">

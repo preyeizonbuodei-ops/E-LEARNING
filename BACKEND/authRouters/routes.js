@@ -1,4 +1,5 @@
 const express = require("express");
+
 const { Register, Login, Logout, verifyVerificationCode, ChangePassword, ForgotPasswordEmail, VerifyForgotPasswordCode, ResetPassword, getRefreshToken } = require("../authControllers/register");
 const { ValidateToken } = require("../middlewares/validateToken");
 const { CreateComment, GetAllComments, GetOneCommnet, UpdateComment, DeleteComment} = require("../authControllers/commentController");
@@ -11,6 +12,9 @@ const { authorizedUserRoles,} = require("../middlewares/RoleControl");
 const { GetTopics } = require("../authControllers/Admin/TopicController");  
 const { GetTopicById } = require("../authControllers/CoursesUser/TopicContent");
 const { SaveMaterial, GetSavedMaterials, DeleteSavedMaterial } = require("../authControllers/CoursesUser/SaveMaterialController");
+const { getDepartments, getDepartmentById } = require("../authControllers/Admin/DepartmentController/DepartmentController");
+const { getMajorAreas, getMajorAreaById } = require("../authControllers/Admin/DepartmentController/MajorAreaController");
+const { getAllMajorAreaTopics, getMajorAreaTopicById } = require("../authControllers/Admin/DepartmentController/MajorTopicController");
 
 
 
@@ -39,6 +43,15 @@ router.post("/save-material", ValidateToken, authorizedUserRoles("Student"), Sav
 router.get("/saved-material", ValidateToken, authorizedUserRoles("Student"), GetSavedMaterials)
 router.delete("/saved-material/:materialId", ValidateToken, authorizedUserRoles("Student"), DeleteSavedMaterial)
 
+// DepartmentsRoute
+router.get("/get-departments", ValidateToken, authorizedUserRoles("Student"), getDepartments);
+router.get("/get-departments/:departmentId", ValidateToken, authorizedUserRoles("Student"), getDepartmentById);
+router.get("/get-major-area", ValidateToken, authorizedUserRoles("Student"), getMajorAreas);
+router.get("/major-area/:majorAreaId", ValidateToken, authorizedUserRoles("Student"), getMajorAreaById);
+
+// Major Area Topic Route
+router.get("/get-major-area-topic", ValidateToken, authorizedUserRoles("Student"), getAllMajorAreaTopics);
+router.get("/get-major-area-topic/:majorTopicId", ValidateToken, authorizedUserRoles("Student"), getMajorAreaTopicById);
 
 // Email Routes
 router.patch("/verify-verification-code", verifyVerificationCode);

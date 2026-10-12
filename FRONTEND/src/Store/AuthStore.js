@@ -264,5 +264,28 @@ export const useAuthStore = create((set) => ({
         } catch (error) {
             console.log(error);
         }
+    },
+
+    ChangePassword: async (
+        oldPassword,
+        newPassword
+    ) => {
+        try {
+            const response = await axios.patch(
+                `${API_URL}/change-password`, 
+                {
+                    oldPassword,
+                    newPassword
+                }
+            )
+
+            set({
+                isLoaing: false
+            })
+
+            return response.data;
+        } catch (error) {
+            console.log(error)
+        }
     }
 }));

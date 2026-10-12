@@ -84,6 +84,22 @@ const UserSideBar = ({ isOpen, setIsOpen }) => {
 
                     {/* Dashboard */}
                     <NavLink
+                        to="/"
+                        end
+                        onClick={handleNavigation}
+                        className={({ isActive }) =>
+                            `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
+                                isActive
+                                    ? "bg-white text-black"
+                                    : "hover:bg-white hover:text-black"
+                            }`
+                        }
+                    >
+                        <h1>Home page</h1>
+                    </NavLink>
+
+
+                    <NavLink
                         to="/me"
                         end
                         onClick={handleNavigation}
@@ -144,28 +160,15 @@ const UserSideBar = ({ isOpen, setIsOpen }) => {
                         }
                     >
                         <House />
-                        <h1>Department</h1>
+                        <h1>My Academic Space</h1>
                     </NavLink>
 
                     {/* Resources */}
-                    <NavLink
-                        to="/me/resources"
-                        onClick={handleNavigation}
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
-                                isActive
-                                    ? "bg-white text-black"
-                                    : "hover:bg-white hover:text-black"
-                            }`
-                        }
-                    >
-                        <ChartBarIncreasing />
-                        <h1>Resources</h1>
-                    </NavLink>
+                    
 
                     {/* Profile */}
                     <NavLink
-                        to="/me/user"
+                        to="/me/profile"
                         onClick={handleNavigation}
                         className={({ isActive }) =>
                             `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
@@ -197,7 +200,7 @@ const UserSideBar = ({ isOpen, setIsOpen }) => {
 
                     {/* Logout */}
                     <button
-                        className="flex items-center justify-center gap-2 rounded py-3 px-3 hover:bg-white hover:text-black"
+                        className="flex gap-2 rounded py-3 px-3 hover:bg-white hover:text-black"
                         onClick={async () => {
                             await Logout();
                             setIsOpen(false);

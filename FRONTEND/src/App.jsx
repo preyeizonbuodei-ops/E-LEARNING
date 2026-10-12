@@ -6,7 +6,7 @@ import { AdminRegister as adminCheck } from "./Store/AdminStore";
 import Home from "./Pages/Home";
 import Navbar from "./Components/Navbar";
 import About from "./Pages/About";
-import Department from "./Pages/Department";
+
 import Research from "./Pages/Research";
 import Resources from "./Pages/Resources";
 import News from "./Pages/News & Events";
@@ -20,9 +20,8 @@ import ForgetPasswordVerification from "./Pages/ForgetPassword";
 import ForgetPasswordSend from "./Pages/ForgetPasswordSend";
 import ResetPassword from "./Pages/ResetPassword";
 
-import DepartmentDetails from "./Departments/DepartmentDetails";
-import AreaDetails from "./Areas/AreaDetails";
-import StudyMaterial from "./Areas/StudyMaterial";
+
+
 
 // ADMIN
 import AdminSidebar from "./DashBoards/AdminDashboard/AdminPages/AdminSidebar";
@@ -36,8 +35,7 @@ import AdminRegister from "./Pages/AdminRegisters/AdminRegister";
 import AdminVerifyEmail from "./Pages/AdminRegisters/AdminVerifyEmail";
 import CreateLessonForm from "./DashBoards/AdminDashboard/AdminPageForms/CreateLesson";
 import CreateTopicForm from "./DashBoards/AdminDashboard/AdminPageForms/CreateTopic"
-
-
+import CreateDepartment from "./DashBoards/AdminDashboard/AdminPageForms/CreateDepartment";
 
 // USER
 import UserLanding from "./DashBoards/UserDashboard/UserPages/UserLanding";
@@ -47,6 +45,18 @@ import Lessons from "./DashBoards/UserDashboard/UserPages/Component/LessonPage";
 import TopicsPage from "./DashBoards/UserDashboard/UserPages/Component/TopicPage"
 import TopicDetails from "./DashBoards/UserDashboard/UserPages/Component/TopicIdPage";                                                          
 import Materials from "./DashBoards/UserDashboard/UserPages/Component/ResourcesPage";
+import Profile from "./DashBoards/UserDashboard/UserPages/Component/Profile";
+import Settings from "./DashBoards/UserDashboard/UserPages/Component/Settings";
+import AdminCreateMajorArea from "./DashBoards/AdminDashboard/AdminPageForms/CreateMajorAreaForm";
+import CreateMajorAreaTopic from "./DashBoards/AdminDashboard/AdminPageForms/MajorTopicForm";
+
+import Department from "./Pages/Department";
+import DepartmentDetails from "./Departments/DepartmentDetails";
+import AreaDetails from "./Areas/AreaDetails";
+import TopicArea from "./Areas/TopicArea";
+import MajorAreaTopicDetails from "./Areas/MajorAreaTopicDetails";
+
+
 // ROUTE PROTECTION
 import ProtectedRoute from "./ProtectedRoute";
 import GuestRoute from "./GuestRote";
@@ -54,6 +64,13 @@ import AdminGuestRoute from "./AdminGuestRoute";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 
 import "./App.css";
+
+
+
+
+
+
+
 
 
 
@@ -178,10 +195,7 @@ function App() {
                     element={<VerifyEmail />}
                 />
 
-                <Route
-                    path="/change-password"
-                    element={<ChangePassword />}
-                />
+                
 
                 <Route
                     path="/verify-forget-password"
@@ -202,20 +216,7 @@ function App() {
 
             {/* ==================== DEPARTMENTS ==================== */}
 
-            <Route
-                path="/departments/:departmentId"
-                element={<DepartmentDetails />}
-            />
-
-            <Route
-                path="/areas/:departmentId/:areaId"
-                element={<AreaDetails />}
-            />
-
-            <Route
-                path="/departments/:departmentId/:areaId/:topicId/:materialId"
-                element={<StudyMaterial />}
-            />
+            
 
             {/* ==================== ADMIN ==================== */}
 
@@ -262,6 +263,27 @@ function App() {
                     element={<CreateTopicForm />}
                 />
 
+                {/* Department Routes */}
+                <Route
+                    path="/admin/create-department"
+                    element={<CreateDepartment />}
+                />
+
+                {/* Create Major Area */}
+                <Route
+                    path="/admin/create-major-area"
+                    element={<AdminCreateMajorArea />}
+                />
+
+                <Route
+                    path="/admin/create-major-area-topic"
+                    element={<CreateMajorAreaTopic />}
+                />
+
+
+                
+                
+
             </Route>
 
             {/* ==================== ADMIN GUEST ==================== */}
@@ -298,6 +320,11 @@ function App() {
                     />
 
                     <Route
+                    path="/me/change-password"
+                    element={<ChangePassword />}
+                />
+
+                    <Route
                         path="/me/courses"
                         element={<Courses />}
                     />
@@ -322,6 +349,36 @@ function App() {
                         path="/learning-materials"
                         element={<Materials />}
                     />
+
+                    <Route
+                        path="/me/profile"
+                        element={<Profile />}
+                    />
+
+                    <Route
+                        path="/me/setting"
+                        element={<Settings />}
+                    />
+
+                    <Route
+                path="/departments/:departmentId"
+                element={<DepartmentDetails />}
+                />
+
+                <Route
+                    path="/areas/:departmentId/:areaId"
+                    element={<AreaDetails />}
+                />
+
+                <Route
+                    path="/major-areas/:areaId"
+                    element={<TopicArea />}
+                />
+
+                <Route
+                    path="/major-area-topics/:majorTopicId"
+                    element={<MajorAreaTopicDetails />}
+                />
 
                     {/* LESSON TOPICS */}
                     {/* We will add this after creating Topics */}

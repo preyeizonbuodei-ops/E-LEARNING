@@ -1,43 +1,46 @@
-const joi = require('joi');
 
-exports.ValidateAdmin = joi.object({
+const Joi = require("joi");
 
-    username: joi.string()
-        .required()
+const ValidateAdmin = Joi.object({
+    username: Joi.string()
+        .trim()
         .min(5)
         .max(59)
-        .message({
+        .required()
+        .messages({
             "string.empty": "Username is required",
-            "string.min": "Username must be more than 5 characters",
-            "string.max": "Username must not be grater or longer than 59 characters",
-            "any.required": "username is required",
+            "string.min": "Username must be at least 5 characters",
+            "string.max": "Username must not exceed 59 characters",
+            "any.required": "Username is required",
         }),
 
-    email: joi.string()
-        .required()
+    email: Joi.string()
+        .trim()
         .email()
-        .allow(".com", ".net")
+        .required()
         .messages({
             "string.empty": "Email is required",
-            "string.email": "Please enter a valid emial",
-            "any.empty": "Email must not be empty",
+            "string.email": "Please enter a valid email address",
+            "any.required": "Email is required",
         }),
 
-    password: joi.string()
+    password: Joi.string()
+        .min(8)
         .required()
-        .min(5)
         .messages({
             "string.empty": "Password is required",
-            "string.password": "please enter a strong password",
-            "string.min": "Please password must be stronger than 5 characters",
+            "string.min": "Password must be at least 8 characters",
+            "any.required": "Password is required",
         }),
 
-    confirmPassword: joi.string()
-        .valid(joi.ref("password"))
+    confirmPassword: Joi.string()
+        .valid(Joi.ref("password"))
+        .required()
         .messages({
-            "any.only": "Passwords do not match",
             "string.empty": "Please confirm your password",
+            "any.only": "Passwords do not match",
             "any.required": "Please confirm your password",
         }),
-})
-        
+});
+
+exports.ValidateAdmin = ValidateAdmin;

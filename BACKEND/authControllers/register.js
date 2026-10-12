@@ -548,7 +548,7 @@ exports.VerifyForgotPasswordCode = async( req, res ) => {
         })
 
         await existingUser.save();
-        res.status(200).json({ success: true, message: `Verification Successful, here is your Token ${resetToken}` })
+        res.status(200).json({ success: true, message: `Verification Successful` })
 
     } catch (error) {
         console.log(error)

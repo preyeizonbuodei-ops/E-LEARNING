@@ -58,6 +58,7 @@ const ChangePassword = () => {
                 <form onSubmit={handleSubmit}> 
                     <div className="">
                         <Input 
+                            type='password'
                             icon={Key}
                             inputLabel="Enter old Password"
                             name="oldPassword"
@@ -69,8 +70,9 @@ const ChangePassword = () => {
 
                     <div>
                         <Input 
+                            type='password'
                             icon={Key}
-                            inputLabel="Enter old password"
+                            inputLabel="Enter new password"
                             name="newPassword"    
                             value={formValues.newPassword}
                             onChange={handleChange}
@@ -80,6 +82,7 @@ const ChangePassword = () => {
 
                     <div>
                         <Input 
+                            type='password'
                             icon={LockKeyholeIcon}
                             inputLabel="confirm new password"
                             name="confirmNewPassword"   

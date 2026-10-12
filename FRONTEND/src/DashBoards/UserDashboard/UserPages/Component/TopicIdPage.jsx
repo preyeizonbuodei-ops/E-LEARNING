@@ -23,27 +23,20 @@ import {
 } from "lucide-react";
 
 import useTopicStore from "../../CourseStore/UserTopicStore";
+import useSavedMaterialStore from "../../CourseStore/SaveMaterialStore";
 
 // --------------------------------------------------
 // HELPER FUNCTIONS
 // --------------------------------------------------
 
 function getText(value, fallback = "") {
-    if (typeof value === "string") {
-        return value;
-    }
-
-    if (typeof value === "number") {
-        return String(value);
-    }
-
+    if (typeof value === "string") return value;
+    if (typeof value === "number") return String(value);
     return fallback;
 }
 
 function getResourceTitle(resource, fallback = "Resource") {
-    if (typeof resource === "string") {
-        return resource;
-    }
+    if (typeof resource === "string") return resource;
 
     return (
         resource?.title ||
@@ -54,9 +47,7 @@ function getResourceTitle(resource, fallback = "Resource") {
 }
 
 function getResourceUrl(resource) {
-    if (typeof resource === "string") {
-        return resource;
-    }
+    if (typeof resource === "string") return resource;
 
     return (
         resource?.url ||
@@ -114,6 +105,14 @@ function getYouTubeEmbedUrl(url) {
     }
 }
 
+// Normalize topicId because a saved material may contain
+// either the topic ID string or a populated topic object.
+function getSavedTopicId(material) {
+    const topicId = material?.topicId;
+
+    return String(topicId?._id || topicId || "");
+}
+
 // --------------------------------------------------
 // RESOURCE CARD
 // --------------------------------------------------
@@ -123,6 +122,8 @@ function ResourceCard({
     index,
     type,
     onSave,
+    isSaving = false,
+    isSaved = false,
 }) {
     const title = getResourceTitle(
         resource,
@@ -130,6 +131,7 @@ function ResourceCard({
     );
 
     const url = getResourceUrl(resource);
+
     const embedUrl =
         type === "video" ? getYouTubeEmbedUrl(url) : "";
 
@@ -200,11 +202,40 @@ function ResourceCard({
                     {type === "material" && url && (
                         <button
                             type="button"
+                            disabled={isSaving || isSaved}
                             onClick={() => onSave?.(resource)}
-                            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+                            aria-label={
+                                isSaved
+                                    ? `${title} saved`
+                                    : isSaving
+                                      ? `Saving ${title}`
+                                      : `Save ${title}`
+                            }
+                            className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition ${
+                                isSaved
+                                    ? "cursor-default border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border-blue-200 text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            }`}
                         >
-                            <BookMarked size={16} />
-                            Save Material
+                            {isSaving ? (
+                                <>
+                                    <LoaderCircle
+                                        size={16}
+                                        className="animate-spin"
+                                    />
+                                    Saving...
+                                </>
+                            ) : isSaved ? (
+                                <>
+                                    <CheckCircle2 size={16} />
+                                    Saved
+                                </>
+                            ) : (
+                                <>
+                                    <BookMarked size={16} />
+                                    Save Material
+                                </>
+                            )}
                         </button>
                     )}
                 </div>
@@ -234,8 +265,6 @@ function ContentBlock({ content }) {
         );
     }
 
-    // The content is currently displayed as readable plain text.
-    // Markdown rendering can be added separately when needed.
     return (
         <div className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700 sm:text-base">
             {text}
@@ -320,13 +349,34 @@ export default function TopicDetails() {
         (state) => state.getTopicById
     );
 
+    // Saved-material store actions and state
+    const saveMaterial = useSavedMaterialStore(
+        (state) => state.saveMaterial
+    );
+
+    const getSavedMaterials = useSavedMaterialStore(
+        (state) => state.getSavedMaterials
+    );
+
+    const savedMaterials = useSavedMaterialStore(
+        (state) => state.savedMaterials
+    );
+
+    const savingMaterialUrl = useSavedMaterialStore(
+        (state) => state.savingMaterialUrl
+    );
+
     const [topic, setTopic] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("content");
     const [saveNotice, setSaveNotice] = useState("");
+    const [saveNoticeType, setSaveNoticeType] = useState("success");
 
-    // Fetch the selected topic.
+    // --------------------------------------------------
+    // FETCH TOPIC
+    // --------------------------------------------------
+
     useEffect(() => {
         let cancelled = false;
 
@@ -382,22 +432,92 @@ export default function TopicDetails() {
         };
     }, [topicId, getTopicById]);
 
-    // Teaching content.
+    // --------------------------------------------------
+    // FETCH SAVED MATERIALS
+    // This restores the Saved button state after refresh.
+    // --------------------------------------------------
+
+    useEffect(() => {
+        getSavedMaterials();
+    }, [getSavedMaterials]);
+
+    // --------------------------------------------------
+    // SAVE MATERIAL
+    // --------------------------------------------------
+
+    const handleSaveMaterial = async (material) => {
+        const title = getResourceTitle(material, "Study material");
+        const url = getResourceUrl(material);
+
+        if (!topicId || !url) {
+            setSaveNoticeType("error");
+            setSaveNotice("Topic ID or material URL is missing.");
+            return;
+        }
+
+        // Prevent duplicate saves for the same topic and URL.
+        const alreadySaved = savedMaterials.some(
+            (saved) =>
+                saved.url === url &&
+                getSavedTopicId(saved) === String(topicId)
+        );
+
+        if (alreadySaved) {
+            setSaveNoticeType("success");
+            setSaveNotice("This material is already saved.");
+            return;
+        }
+
+        setSaveNotice("");
+
+        try {
+            const result = await saveMaterial({
+                topicId,
+                title,
+                url,
+                resourceType: "material",
+            });
+
+            if (result?.success) {
+                // Refresh the saved materials from the backend.
+                await getSavedMaterials();
+
+                setSaveNoticeType("success");
+                setSaveNotice(result.message || `${title} saved successfully!`);
+            } else {
+                setSaveNoticeType("error");
+                setSaveNotice(
+                    result?.message || "Failed to save material. Please try again."
+                );
+            }
+        } catch (err) {
+            console.error("FAILED TO SAVE MATERIAL:", err);
+
+            setSaveNoticeType("error");
+            setSaveNotice(
+                err?.response?.data?.message ||
+                err?.message ||
+                "Failed to save material. Please try again."
+            );
+        }
+    };
+
+    // --------------------------------------------------
+    // TOPIC DATA
+    // --------------------------------------------------
+
     const content =
         topic?.content ||
         topic?.teachingContent ||
         topic?.body ||
         "";
 
-    // Examples can be either a string or an array.
-    // Your current database stores examples as a string.
     const examples =
         topic?.workedExamples ||
         topic?.examples ||
         topic?.workedExample ||
         "";
 
-    // Normalize videos into an array.
     const videos = useMemo(() => {
         const value =
             topic?.videos ||
@@ -407,15 +527,10 @@ export default function TopicDetails() {
         return Array.isArray(value) ? value : [value];
     }, [topic]);
 
-    // Combine all supported study-material fields.
-    // Your current database uses "materials" and "resources".
     const materials = useMemo(() => {
         const normalize = (value) => {
             if (!value) return [];
-
-            return Array.isArray(value)
-                ? value
-                : [value];
+            return Array.isArray(value) ? value : [value];
         };
 
         return [
@@ -425,19 +540,6 @@ export default function TopicDetails() {
             ...normalize(topic?.resources),
         ];
     }, [topic]);
-
-    // Save button placeholder.
-    // This does not persist the material to the database yet.
-    const handleSaveMaterial = (material) => {
-        const title = getResourceTitle(
-            material,
-            "Study material"
-        );
-
-        setSaveNotice(
-            `"${title}" cannot be saved permanently yet. The saved-materials feature will be connected to your account next.`
-        );
-    };
 
     const tabs = [
         {
@@ -524,9 +626,7 @@ export default function TopicDetails() {
                     <div className="mt-5 flex flex-wrap gap-3">
                         <button
                             type="button"
-                            onClick={() =>
-                                window.location.reload()
-                            }
+                            onClick={() => window.location.reload()}
                             className="inline-flex items-center gap-2 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
                         >
                             <RefreshCw size={16} />
@@ -553,7 +653,6 @@ export default function TopicDetails() {
     return (
         <div className="min-h-screen bg-slate-50">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                {/* Breadcrumb / back navigation */}
                 <Link
                     to={-1}
                     onClick={(event) => {
@@ -614,7 +713,6 @@ export default function TopicDetails() {
                 </header>
 
                 <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-                    {/* Main content */}
                     <main className="min-w-0">
                         {/* Tabs */}
                         <div className="mb-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
@@ -656,7 +754,7 @@ export default function TopicDetails() {
                             </div>
                         </div>
 
-                        {/* Teaching content tab */}
+                        {/* Teaching content */}
                         {activeTab === "content" && (
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                                 <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-5">
@@ -692,7 +790,7 @@ export default function TopicDetails() {
                             </section>
                         )}
 
-                        {/* Worked examples tab */}
+                        {/* Worked examples */}
                         {activeTab === "examples" && (
                             <section className="space-y-5">
                                 <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
@@ -743,8 +841,8 @@ export default function TopicDetails() {
                                             </h3>
 
                                             <p className="mt-2 text-sm text-slate-500">
-                                                Examples for this topic
-                                                will appear here when added.
+                                                Examples for this topic will
+                                                appear here when added.
                                             </p>
                                         </div>
                                     )}
@@ -752,7 +850,7 @@ export default function TopicDetails() {
                             </section>
                         )}
 
-                        {/* Videos tab */}
+                        {/* Videos */}
                         {activeTab === "videos" && (
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                                 <div className="mb-6 flex items-center gap-3">
@@ -766,27 +864,24 @@ export default function TopicDetails() {
                                         </h2>
 
                                         <p className="mt-1 text-sm text-slate-500">
-                                            Reinforce your understanding
-                                            with videos.
+                                            Reinforce your understanding with videos.
                                         </p>
                                     </div>
                                 </div>
 
                                 {videos.length > 0 ? (
                                     <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                                        {videos.map(
-                                            (video, index) => (
-                                                <ResourceCard
-                                                    key={
-                                                        video?._id ||
-                                                        `${getResourceUrl(video)}-${index}`
-                                                    }
-                                                    resource={video}
-                                                    index={index}
-                                                    type="video"
-                                                />
-                                            )
-                                        )}
+                                        {videos.map((video, index) => (
+                                            <ResourceCard
+                                                key={
+                                                    video?._id ||
+                                                    `${getResourceUrl(video)}-${index}`
+                                                }
+                                                resource={video}
+                                                index={index}
+                                                type="video"
+                                            />
+                                        ))}
                                     </div>
                                 ) : (
                                     <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center">
@@ -800,15 +895,15 @@ export default function TopicDetails() {
                                         </h3>
 
                                         <p className="mt-2 text-sm text-slate-500">
-                                            Videos added to this topic
-                                            will appear here.
+                                            Videos added to this topic will
+                                            appear here.
                                         </p>
                                     </div>
                                 )}
                             </section>
                         )}
 
-                        {/* Study materials tab */}
+                        {/* Study materials */}
                         {activeTab === "materials" && (
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                                 <div className="mb-6 flex items-center gap-3">
@@ -822,8 +917,8 @@ export default function TopicDetails() {
                                         </h2>
 
                                         <p className="mt-1 text-sm text-slate-500">
-                                            Open reference materials and
-                                            save resources for later.
+                                            Open reference materials and save
+                                            resources for later.
                                         </p>
                                     </div>
                                 </div>
@@ -831,13 +926,25 @@ export default function TopicDetails() {
                                 {saveNotice && (
                                     <div
                                         role="status"
-                                        className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-800"
+                                        aria-live="polite"
+                                        className={`mb-5 rounded-xl border p-4 text-sm leading-6 ${
+                                            saveNoticeType === "error"
+                                                ? "border-red-200 bg-red-50 text-red-800"
+                                                : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                        }`}
                                     >
                                         <div className="flex items-start gap-2">
-                                            <CircleAlert
-                                                size={18}
-                                                className="mt-0.5 shrink-0"
-                                            />
+                                            {saveNoticeType === "error" ? (
+                                                <CircleAlert
+                                                    size={18}
+                                                    className="mt-0.5 shrink-0"
+                                                />
+                                            ) : (
+                                                <CheckCircle2
+                                                    size={18}
+                                                    className="mt-0.5 shrink-0"
+                                                />
+                                            )}
 
                                             <p>{saveNotice}</p>
                                         </div>
@@ -847,20 +954,44 @@ export default function TopicDetails() {
                                 {materials.length > 0 ? (
                                     <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
                                         {materials.map(
-                                            (material, index) => (
-                                                <ResourceCard
-                                                    key={
-                                                        material?._id ||
-                                                        `${getResourceUrl(material)}-${index}`
-                                                    }
-                                                    resource={material}
-                                                    index={index}
-                                                    type="material"
-                                                    onSave={
-                                                        handleSaveMaterial
-                                                    }
-                                                />
-                                            )
+                                            (material, index) => {
+                                                const materialUrl =
+                                                    getResourceUrl(material);
+
+                                                const isSaving = Boolean(
+                                                    materialUrl &&
+                                                    savingMaterialUrl ===
+                                                        materialUrl
+                                                );
+
+                                                const isSaved =
+                                                    savedMaterials.some(
+                                                        (saved) =>
+                                                            saved.url ===
+                                                                materialUrl &&
+                                                            getSavedTopicId(
+                                                                saved
+                                                            ) ===
+                                                                String(topicId)
+                                                    );
+
+                                                return (
+                                                    <ResourceCard
+                                                        key={
+                                                            material?._id ||
+                                                            `${materialUrl}-${index}`
+                                                        }
+                                                        resource={material}
+                                                        index={index}
+                                                        type="material"
+                                                        onSave={
+                                                            handleSaveMaterial
+                                                        }
+                                                        isSaving={isSaving}
+                                                        isSaved={isSaved}
+                                                    />
+                                                );
+                                            }
                                         )}
                                     </div>
                                 ) : (
@@ -875,9 +1006,8 @@ export default function TopicDetails() {
                                         </h3>
 
                                         <p className="mt-2 text-sm text-slate-500">
-                                            Study materials and external
-                                            links added to this topic
-                                            will appear here.
+                                            Study materials and external links
+                                            added to this topic will appear here.
                                         </p>
                                     </div>
                                 )}
@@ -887,7 +1017,6 @@ export default function TopicDetails() {
 
                     {/* Right sidebar */}
                     <aside className="space-y-5">
-                        {/* Topic overview */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                             <h2 className="font-bold text-slate-900">
                                 Topic Overview
@@ -1008,10 +1137,9 @@ export default function TopicDetails() {
                             </div>
 
                             <p className="mt-3 text-sm leading-6 text-blue-900">
-                                Read the teaching content first, work
-                                through the examples, then use the
-                                videos and external materials to
-                                strengthen your understanding.
+                                Read the teaching content first, work through
+                                the examples, then use the videos and external
+                                materials to strengthen your understanding.
                             </p>
                         </section>
                     </aside>
