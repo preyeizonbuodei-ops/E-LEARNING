@@ -1,4 +1,4 @@
-const express = require ('express');
+
 const axios = require('axios')
 
 exports.ConnectNews = async (req, res) => {
@@ -18,6 +18,9 @@ exports.ConnectNews = async (req, res) => {
         return res.status(200).json({ success: true, data: connect.data })
 
     } catch (error) {
+        console.log("Status:", error.response?.status);
+        console.log("Error data:", error.response?.data);
+        console.log("Error message:", error.message);
         console.log(error)
     }
 }

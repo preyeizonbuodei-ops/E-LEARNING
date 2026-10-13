@@ -70,7 +70,7 @@ router.get("/get-one-commnet/:id", ValidateToken, authorizedUserRoles("Student")
 router.put("/update-comment/:id", ValidateToken, authorizedUserRoles("Student"), UpdateComment);
 router.delete("/delete-comment/:id", ValidateToken, authorizedUserRoles("Student"), DeleteComment);
 
-router.get("/get-news", ValidateToken, authorizedUserRoles("Studnet"), ConnectNews);
+router.get("/get-news", ValidateToken, authorizedUserRoles("Student"), ConnectNews);
 
 
 module.exports = router;
