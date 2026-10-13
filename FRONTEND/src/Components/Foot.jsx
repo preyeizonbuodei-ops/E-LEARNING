@@ -82,25 +82,25 @@ const Foot = () => {
           </h2>
 
           <div className="flex flex-col gap-3 text-sm text-gray-300">
-            <h3 className="cursor-pointer transition hover:text-amber-500">
+            <NavLink to="/me" className="cursor-pointer transition hover:text-amber-500">
               Student Portal
-            </h3>
+            </NavLink>
 
             <h3 className="cursor-pointer transition hover:text-amber-500">
               News Update
             </h3>
 
-            <h3 className="cursor-pointer transition hover:text-amber-500">
+             <NavLink to="/me" className="cursor-pointer transition hover:text-amber-500">
               E-Learning
-            </h3>
+            </NavLink>
 
-            <h3 className="cursor-pointer transition hover:text-amber-500">
-              Downloads
-            </h3>
+             <NavLink to="/me/learning-materials" className="cursor-pointer transition hover:text-amber-500">
+              Saved Materials
+            </NavLink>
 
-            <h3 className="cursor-pointer transition hover:text-amber-500">
-              Academic Calendar
-            </h3>
+             <NavLink to="/me" className="cursor-pointer transition hover:text-amber-500">
+              Academic Calender
+            </NavLink>
           </div>
         </div>
 

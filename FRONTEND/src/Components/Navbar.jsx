@@ -19,9 +19,23 @@ const Navbar = () => {
         const departmentActive =
             pathname === "/department" ||
             pathname.startsWith("/departments/");
+            
 
         return `relative py-2 ${
             isActive || departmentActive
+                ? "text-amber-500 font-semibold after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-amber-500 transition duration-500"
+                : "text-white hover:text-blue-400 transition duration-500"
+        }`;
+    };
+
+    const researchNavStyle = ({ isActive }) => {
+        const researchActive =
+            pathname === "/research" ||
+            pathname.startsWith("/research-papers/");
+            
+
+        return `relative py-2 ${
+            isActive || researchActive
                 ? "text-amber-500 font-semibold after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-amber-500 transition duration-500"
                 : "text-white hover:text-blue-400 transition duration-500"
         }`;
@@ -65,7 +79,7 @@ const Navbar = () => {
                         Resources
                     </NavLink>
 
-                    <NavLink to="/research" className={navStyle}>
+                    <NavLink to="/research" className={researchNavStyle}>
                         Research
                     </NavLink>
 
@@ -73,7 +87,7 @@ const Navbar = () => {
                         Contact
                     </NavLink>
 
-                    <NavLink to="/news" className={navStyle}>
+                    <NavLink to="/get-news" className={navStyle}>
                         News
                     </NavLink>
                 </div>

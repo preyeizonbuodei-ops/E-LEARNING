@@ -5,7 +5,8 @@ const bcrypt = require("bcrypt");
 const { DoHash } = require("../utils/hashing");
 const jwt = require("jsonwebtoken");
 const transport = require("../middlewares/sendMail")
-const { hmacProcess }  = require('../utils/hashing') 
+const { hmacProcess }  = require('../utils/hashing'); 
+const Admin = require("../modules/adminSchema");
 
 exports.Register = async (req, res) => {
     try {
@@ -142,7 +143,7 @@ exports.verifyVerificationCode = async (req, res) => {
             },
             process.env.JWT_SECRET,
             {
-                expiresIn: "5m"
+                expiresIn: "1h"
             }
         );
 
@@ -151,7 +152,7 @@ exports.verifyVerificationCode = async (req, res) => {
             httpOnly: true,
             sameSite: "strict",
             secure: process.env.NODE_ENV === "production",
-            maxAge: 5 * 60 * 1000
+            maxAge: 1 * 60 * 60 * 1000
         });
 
 
@@ -256,7 +257,7 @@ exports.Login = async (req, res) => {
             },
             process.env.JWT_SECRET,
             {
-                expiresIn: "5m"
+                expiresIn: "1h"
             }
         );
 
@@ -265,7 +266,7 @@ exports.Login = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
-            maxAge: 5 * 60 * 1000
+            maxAge: 1 * 60 * 60 * 1000
         });
 
 
@@ -638,7 +639,7 @@ exports.getRefreshToken = async (req, res) => {
             },
             process.env.JWT_SECRET,
             {
-                expiresIn: "5m"
+                expiresIn: "1h"
             }
         );
 
@@ -647,7 +648,7 @@ exports.getRefreshToken = async (req, res) => {
             httpOnly: true,
             sameSite: "Strict",
             secure: process.env.NODE_ENV === "production",
-            mmaxAge: 5 * 60 * 1000
+            mmaxAge: 1 * 60 * 60 * 1000
         });
 
         //  Send response
@@ -665,4 +666,148 @@ exports.getRefreshToken = async (req, res) => {
             message: "Invalid or expired refresh token"
         });
     }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const [students, admins] = await Promise.all([
+      User.find()
+        .select(
+          "username email level department matricNumber role isVerified isLoggedIn lastLogin createdAt updatedAt"
+        )
+        .lean(),
+
+      Admin.find()
+        .select(
+          "username email role isVerified isLoggedIn lastLoggedIn createdAt updatedAt"
+        )
+        .lean(),
+    ]);
+
+    // Identify each account type
+    const formattedStudents = students.map((student) => ({
+      ...student,
+      accountType: "Student",
+      lastLogin: student.lastLogin,
+    }));
+
+    const formattedAdmins = admins.map((admin) => ({
+      ...admin,
+      accountType: "Admin",
+      lastLogin: admin.lastLoggedIn,
+    }));
+
+    // Combine both account types and sort by registration date
+    const allUsers = [...formattedStudents, ...formattedAdmins].sort(
+      (a, b) =>
+        new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    );
+
+    return res.status(200).json({
+      success: true,
+      totalUsers: allUsers.length,
+      totalStudents: students.length,
+      totalAdmins: admins.length,
+      users: allUsers,
+    });
+  } catch (error) {
+    console.error("GET ALL USERS ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve users",
+    });
+  }
+};
+
+// Update a user
+exports.updateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const {
+      username,
+      email,
+      level,
+      department,
+      matricNumber,
+    } = req.body;
+
+    const updates = {};
+
+    if (username !== undefined) updates.username = username;
+    if (email !== undefined) updates.email = email;
+    if (level !== undefined) updates.level = level;
+    if (department !== undefined) updates.department = department;
+    if (matricNumber !== undefined) {
+      updates.matricNumber = matricNumber;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid fields provided for update",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select(
+      "username email level department matricNumber role isVerified isLoggedIn lastLogin createdAt updatedAt"
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("UPDATE USER ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update user",
+    });
+  }
+};
+
+// Delete a user
+exports.deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error("DELETE USER ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete user",
+    });
+  }
 };

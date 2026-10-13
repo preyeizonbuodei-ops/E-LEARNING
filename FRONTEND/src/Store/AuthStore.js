@@ -287,5 +287,6 @@ export const useAuthStore = create((set) => ({
         } catch (error) {
             console.log(error)
         }
-    }
+    },
+
 }));

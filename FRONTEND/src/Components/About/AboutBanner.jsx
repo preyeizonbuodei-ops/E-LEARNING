@@ -1,6 +1,7 @@
 import { ArrowRight, Quote, GraduationCap,Target, Eye } from 'lucide-react';
 import Work from '../../Image/work4.jpg';
 import { motion } from "motion/react";
+import { NavLink } from 'react-router-dom';
 
 const AboutBanner = () => {
 
@@ -38,10 +39,9 @@ const AboutBanner = () => {
 
           <div className="mt-6">
 
-            <button className="w-full justify-center flex md:items-center md:w-fit gap-3  lg:items-center lg:w-fitrounded-lg hover:cursor-pointer bg-blue-950 px-5 py-3 font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-blue-800">
+            <NavLink to="/me" className="w-full justify-center flex md:items-center md:w-fit gap-3  lg:items-center lg:w-fitrounded-lg hover:cursor-pointer bg-blue-950 px-5 py-3 font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-blue-800">
               Student Portal
-              <ArrowRight className="h-5 w-5" />
-            </button>
+            </NavLink>
 
           </div>
 

@@ -30,21 +30,7 @@ const Resource = () => {
 
     </motion.div>
 
-    <motion.div 
-      transition={{duration: 0.2 }}
-      whileHover={{ y: -8 }}
-    className="flex gap-3 shadow-[0_0_20px_rgba(0,0,0,0.20)] p-3 rounded-lg hover:cursor-pointer">
-      <div>
-        <Monitor className="size-15 bg-blue-200 text-amber-500 rounded-full p-3"/>
-       </div>
-
-      <div>
-        <h1 className="font-bold mb-3">E-Learning</h1>
-        <p className="text-gray-500 ">Online courses, materials, and learning tools to enhance your skills</p>
-        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
-      </div>
-
-    </motion.div>
+  
 
     <motion.div 
       transition={{duration: 0.2 }}

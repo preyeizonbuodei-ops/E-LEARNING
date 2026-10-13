@@ -52,23 +52,43 @@ exports.CreateDepartment = async (req, res) => {
     }
 };
 
+
 exports.getDepartments = async (req, res) => {
-    try {
-        const departments = await Department.find().sort({ name: 1 });
+  try {
+    const departments = await Department.find().sort({ name: 1 }).lean();
 
-        return res.status(200).json({
-            success: true,
-            departments,
-        });
-    } catch (error) {
-        console.error("Get Departments Error:", error);
+    const majorAreas = await MajorArea.find()
+      .select("department")
+      .lean();
 
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-        });
-    }
+    const majorAreaCounts = majorAreas.reduce((counts, area) => {
+      const departmentId = area.department.toString();
+
+      counts[departmentId] = (counts[departmentId] || 0) + 1;
+
+      return counts;
+    }, {});
+
+    const departmentsWithMajorAreas = departments.map((department) => ({
+      ...department,
+      majorAreaCount: majorAreaCounts[department._id.toString()] || 0,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      departments: departmentsWithMajorAreas,
+    });
+  } catch (error) {
+    console.error("Get departments error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve departments",
+    });
+  }
 };
+
+
 
 exports.getDepartmentById = async (req, res) => {
     try {

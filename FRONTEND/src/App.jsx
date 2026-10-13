@@ -49,13 +49,15 @@ import Profile from "./DashBoards/UserDashboard/UserPages/Component/Profile";
 import Settings from "./DashBoards/UserDashboard/UserPages/Component/Settings";
 import AdminCreateMajorArea from "./DashBoards/AdminDashboard/AdminPageForms/CreateMajorAreaForm";
 import CreateMajorAreaTopic from "./DashBoards/AdminDashboard/AdminPageForms/MajorTopicForm";
+import CreateResearchPaper from "./DashBoards/AdminDashboard/AdminPageForms/CreateResearchPaper";
 
 import Department from "./Pages/Department";
 import DepartmentDetails from "./Departments/DepartmentDetails";
 import AreaDetails from "./Areas/AreaDetails";
 import TopicArea from "./Areas/TopicArea";
 import MajorAreaTopicDetails from "./Areas/MajorAreaTopicDetails";
-
+import ResearchPapers from "./Components/Reserch/ResearchPapers";
+import UserData from "./DashBoards/AdminDashboard/AdminPages/UsersData";
 
 // ROUTE PROTECTION
 import ProtectedRoute from "./ProtectedRoute";
@@ -64,6 +66,10 @@ import AdminGuestRoute from "./AdminGuestRoute";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 
 import "./App.css";
+
+
+
+
 
 
 
@@ -127,7 +133,7 @@ function App() {
             />
 
             <Route
-                path="/news"
+                path="/get-news"
                 element={
                     <>
                         <Navbar />
@@ -216,7 +222,10 @@ function App() {
 
             {/* ==================== DEPARTMENTS ==================== */}
 
-            
+            <Route
+                path="/research-papers"
+                element={<ResearchPapers />}
+            />
 
             {/* ==================== ADMIN ==================== */}
 
@@ -246,6 +255,10 @@ function App() {
                         element={<Topics />}
                     />
 
+                    <Route
+                        path="users"
+                        element={<UserData />}
+                    />
                 </Route>
 
                 <Route
@@ -279,6 +292,13 @@ function App() {
                     path="/admin/create-major-area-topic"
                     element={<CreateMajorAreaTopic />}
                 />
+
+                <Route
+                    path="/admin/create-research-paper"
+                    element={<CreateResearchPaper />}
+                />
+
+                
 
 
                 
@@ -346,7 +366,7 @@ function App() {
                     />
 
                     <Route
-                        path="/learning-materials"
+                        path="/me/learning-materials"
                         element={<Materials />}
                     />
 
@@ -374,6 +394,8 @@ function App() {
                     path="/major-areas/:areaId"
                     element={<TopicArea />}
                 />
+
+                
 
                 <Route
                     path="/major-area-topics/:majorTopicId"

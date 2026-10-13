@@ -7,8 +7,12 @@ import {
     GraduationCap,
     Layers3,
     Sparkles,
+    FileText,
+    ExternalLink,
 } from "lucide-react";
 import { useUserMajorAreaTopicStore } from "../DashBoards/UserDashboard/DepartmentStore/UserMajorTopicStore";
+import { useResearchPaperStore } from "../DashBoards/UserDashboard/CourseStore/UserResearchPaperStore";
+
 
 const TopicArea = () => {
     const { areaId } = useParams();
@@ -20,9 +24,20 @@ const TopicArea = () => {
         getAllMajorAreaTopics,
     } = useUserMajorAreaTopicStore();
 
+    const {
+        researchPapers,
+        loading: researchLoading,
+        error: researchError,
+        getAllResearchPapers,
+    } = useResearchPaperStore();
+
     useEffect(() => {
         getAllMajorAreaTopics().catch(() => {});
     }, [getAllMajorAreaTopics]);
+
+    useEffect(() => {
+        getAllResearchPapers().catch(() => {});
+    }, [getAllResearchPapers]);
 
     const topics = majorAreaTopics.filter((topic) => {
         const topicMajorAreaId =
@@ -30,27 +45,27 @@ const TopicArea = () => {
                 ? topic.majorArea?._id
                 : topic.majorArea;
 
-        return topicMajorAreaId === areaId;
+        return String(topicMajorAreaId) === String(areaId);
     });
 
     const areaName =
-        typeof majorAreaTopics.find((topic) => {
+        topics.find((topic) => {
             const topicMajorAreaId =
                 typeof topic.majorArea === "object"
                     ? topic.majorArea?._id
                     : topic.majorArea;
 
-            return topicMajorAreaId === areaId;
-        })?.majorArea === "object"
-            ? majorAreaTopics.find((topic) => {
-                  const topicMajorAreaId =
-                      typeof topic.majorArea === "object"
-                          ? topic.majorArea?._id
-                          : topic.majorArea;
+            return String(topicMajorAreaId) === String(areaId);
+        })?.majorArea?.name || "Explore Major Area";
 
-                  return topicMajorAreaId === areaId;
-              })?.majorArea?.name
-            : "Explore Major Area";
+    const areaResearchPapers = researchPapers.filter((paper) => {
+        const paperAreaId =
+            typeof paper.majorAreaId === "object"
+                ? paper.majorAreaId?._id
+                : paper.majorAreaId;
+
+        return String(paperAreaId) === String(areaId);
+    });
 
     return (
         <section className="pb-16">
@@ -187,6 +202,102 @@ const TopicArea = () => {
                                     Start learning
                                     <ArrowRight className="size-4" />
                                 </Link>
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Research Papers Section */}
+            <div className="mx-3 mt-16 sm:mx-6 lg:mx-23">
+                <div className="mb-7">
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+                        Explore academic research
+                    </p>
+
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                        Research Papers
+                    </h2>
+
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500 sm:text-base">
+                        Discover research publications related to this major
+                        area and explore ideas from engineering researchers.
+                    </p>
+                </div>
+
+                {researchLoading ? (
+                    <div className="py-8 text-sm text-slate-500">
+                        Loading research papers...
+                    </div>
+                ) : researchError ? (
+                    <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
+                        {researchError}
+                    </div>
+                ) : areaResearchPapers.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+                        <FileText className="mx-auto size-10 text-slate-400" />
+
+                        <h3 className="mt-4 text-lg font-semibold text-slate-800">
+                            No research papers available yet
+                        </h3>
+
+                        <p className="mt-2 text-sm text-slate-500">
+                            Research papers added to this major area will
+                            appear here.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        {areaResearchPapers.map((paper) => (
+                            <article
+                                key={paper._id}
+                                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                            >
+                                <div className="flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                    <FileText className="size-6" />
+                                </div>
+
+                                <h3 className="mt-5 text-lg font-bold leading-snug text-slate-900">
+                                    {paper.title}
+                                </h3>
+
+                                <p className="mt-2 text-sm text-slate-500">
+                                    {Array.isArray(paper.authors)
+                                        ? paper.authors.join(", ")
+                                        : paper.authors}
+                                    {" · "}
+                                    {paper.publicationYear}
+                                </p>
+
+                                <p className="mt-4 line-clamp-4 text-sm leading-6 text-slate-600">
+                                    {paper.abstract}
+                                </p>
+
+                                <div className="mt-6 flex flex-wrap gap-3">
+                                    {paper.sourceUrl && (
+                                        <a
+                                            href={paper.sourceUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 rounded-lg bg-blue-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-900"
+                                        >
+                                            Read Paper
+                                            <ExternalLink className="size-4" />
+                                        </a>
+                                    )}
+
+                                    {paper.pdfUrl && (
+                                        <a
+                                            href={paper.pdfUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                        >
+                                            View PDF
+                                            <ExternalLink className="size-4" />
+                                        </a>
+                                    )}
+                                </div>
                             </article>
                         ))}
                     </div>

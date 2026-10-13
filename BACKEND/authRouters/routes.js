@@ -15,6 +15,8 @@ const { SaveMaterial, GetSavedMaterials, DeleteSavedMaterial } = require("../aut
 const { getDepartments, getDepartmentById } = require("../authControllers/Admin/DepartmentController/DepartmentController");
 const { getMajorAreas, getMajorAreaById } = require("../authControllers/Admin/DepartmentController/MajorAreaController");
 const { getAllMajorAreaTopics, getMajorAreaTopicById } = require("../authControllers/Admin/DepartmentController/MajorTopicController");
+const { ContactFormController } = require("../authControllers/ContactFormController");
+const { getAllResearchPapers, getResearchPaperById } = require("../authControllers/Admin/DepartmentController/ResearchAreaController");
 
 
 
@@ -60,8 +62,9 @@ router.patch("/forgot-password",  ForgotPasswordEmail);
 router.patch("/verify-forgot-password", VerifyForgotPasswordCode);
 router.patch("/reset-password", ResetPassword);
 
-
-
+// Research Papers route
+router.get("/get-all-research-papers", ValidateToken, authorizedUserRoles("Student"), getAllResearchPapers);
+router.get("/get-all-research/:researchPaper", ValidateToken, authorizedUserRoles("Student"), getResearchPaperById);
 // comment routes
 
 router.post("/comment", ValidateToken, authorizedUserRoles("Student"), CreateComment);
@@ -71,6 +74,6 @@ router.put("/update-comment/:id", ValidateToken, authorizedUserRoles("Student"),
 router.delete("/delete-comment/:id", ValidateToken, authorizedUserRoles("Student"), DeleteComment);
 
 router.get("/get-news", ValidateToken, authorizedUserRoles("Student"), ConnectNews);
-
+router.post("/send-email", ValidateToken, authorizedUserRoles("Student"), ContactFormController);
 
 module.exports = router;

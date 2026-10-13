@@ -4,7 +4,7 @@ import Navbar from '../Components/Navbar';
 import Data from '../Components/Data';
 import Call from '../Components/Call';
 import { ArrowRight, Cog, RobotArm, HardHat,   Zap, Fuel, FlaskConical, Bot, BrainCog, Landmark, Cpu, Factory, Wifi, Wrench, BookCheck, NotebookPen, Megaphone, CalendarDays, SearchSlash, TvMinimalPlay, FilePlus, UserRoundPen, Heart } from 'lucide-react';
-import Department from '../Components/Deparment/Department';
+
 import Action from '../Components/Action';
 import Laboratory from '../Components/Laboratory';
 import Lab1 from '../Image/lab1.jpg'
@@ -18,6 +18,8 @@ import Foot from '../Components/Foot';
 import { NavLink } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import DepartmentComponent from './DepartmentComponent';
+
 
 
 const Home = () => {
@@ -211,49 +213,7 @@ const Home = () => {
                 OUR DEPARTMENTS
             </h2>
 
-            <div className='grid mr-2 ml-2 grid-cols-1 md:grid-cols-3 lg:grid-cols-3 md:mr-20 md:ml-20 md:mb-12 gap-5 bg-blue '>
-
-                <div className='"w-full max-w-md p-9 transition duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.12)] cursor-pointer flex justify-center items-center'>
-                    <Department image={Cog} 
-                    department="Mechanical Engineering"
-                      />
-                    
-                </div>
-
-                <div className='"w-full max-w-md p-9 transition duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.12)] cursor-pointer'>
-                    <Department image={RobotArm} 
-                    department="Mechatronics Engineering"
-                      />
-                    
-                </div>
-
-                <div className='"w-full max-w-md p-9 transition duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.12)] cursor-pointer'>
-                    <Department image={HardHat} 
-                    department="Civil Engineering"
-                      />
-                </div>
-
-                <div className='"w-full max-w-md p-9 transition duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.12)]  cursor-pointer'>
-                    <Department image={Zap} 
-                    department="Electrical/Electronics Engineering"
-                     />
-                    
-                </div>
-
-                <div className='"w-full max-w-md p-9 transition duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.12)] cursor-pointer'>
-                    <Department image={Fuel} 
-                    department="Petroleum and Gas Engineering"
-                     />
-                    
-                </div>
-
-                <div className='"w-full max-w-md p-9 transition duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.12)] cursor-pointer'>
-                    <Department image={FlaskConical} 
-                    department="Chemical Engineering"
-                     />
-                    
-                </div>
-            </div>
+            <DepartmentComponent />
             
 
 
@@ -442,8 +402,7 @@ const Home = () => {
                         </div>
 
                     </div>
-
-                    <button className='flex w-full py-3 justify-center mt-3 bg-blue-950 text-white md:justify-start md:w-fit md:mb-5 md:mt-5 hover:bg-blue-700 pt-2 md:pb-2 md:pr-12 md:pl-12 transition duration-500 cursor-pointer rounded-sm gap-6'>Go to student Portal <ArrowRight/> </button>
+                    <NavLink className='flex w-full py-3 justify-center mt-3 bg-blue-950 text-white md:justify-start md:w-fit md:mb-5 md:mt-5 hover:bg-blue-700 pt-2 md:pb-2 md:pr-12 md:pl-12 transition duration-500 cursor-pointer rounded-sm gap-6' to="/me">Go to student Portal <ArrowRight/></NavLink>
                 </div>
 
             </div>

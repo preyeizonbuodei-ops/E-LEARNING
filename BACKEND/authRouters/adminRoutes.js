@@ -11,8 +11,17 @@ const { GetAdminRefreshToken } = require("../authControllers/adminRegister");
 const { CreateDepartment, getDepartments } = require("../authControllers/Admin/DepartmentController/DepartmentController");
 const { createMajorArea, getMajorAreas, getMajorAreaById } = require("../authControllers/Admin/DepartmentController/MajorAreaController");
 const { createMajorAreaTopic, getAllMajorAreaTopics, getMajorAreaTopicById } = require("../authControllers/Admin/DepartmentController/MajorTopicController");
+const { createResearchPaper } = require("../authControllers/Admin/DepartmentController/ResearchAreaController");
+const { getAdminDashboardStats } = require("../authControllers/Admin/GetAdminStatController");
+const { getAllUsers, updateUser, deleteUser } = require("../authControllers/register")
+
 const adminRouter = express.Router();
 
+
+adminRouter.get('/dashboard-stats', ValidateAdminToken, authorizedAdminRoles("Admin"), getAdminDashboardStats)
+adminRouter.get('/get-all-users', ValidateAdminToken, authorizedAdminRoles("Admin"), getAllUsers)
+adminRouter.patch('/update-user/:userId', ValidateAdminToken, authorizedAdminRoles("Admin"), updateUser)
+adminRouter.delete('/delete-user/:userId', ValidateAdminToken, authorizedAdminRoles("Admin"), deleteUser)
 
 // Admin Routes
 adminRouter.post('/create-course',  ValidateAdminToken, authorizedAdminRoles("Admin"), CreateCourse)
@@ -34,6 +43,9 @@ adminRouter.get("/major-area/:majorAreaId", getMajorAreaById)
 adminRouter.post("/create-major-area-topic", createMajorAreaTopic)
 adminRouter.get("/get-major-area-topic", getAllMajorAreaTopics)
 adminRouter.get("/get-major-area-topic/:majorTopicId", getMajorAreaTopicById)
+
+// Research Paper route
+adminRouter.post("/create-research-paper", createResearchPaper)
 
 // Admin Control Routes
 adminRouter.post("/register", AdminRegister)

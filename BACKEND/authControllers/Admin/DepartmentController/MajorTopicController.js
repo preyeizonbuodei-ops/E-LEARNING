@@ -44,21 +44,30 @@ const createMajorAreaTopic = async (req, res) => {
 
 // Get All Topics
 const getAllMajorAreaTopics = async (req, res) => {
-    try {
-        const topics = await MajorAreaTopic.find()
-            .populate("majorArea", "name")
-            .sort({ createdAt: -1 });
+  try {
+    const topics = await MajorAreaTopic.find()
+      .populate({
+        path: "majorArea",
+        select: "name department",
+        populate: {
+          path: "department",
+          select: "name",
+        },
+      })
+      .sort({ createdAt: -1 });
 
-        return res.status(200).json({
-            success: true,
-            topics,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      topics,
+    });
+  } catch (error) {
+    console.error("GET MAJOR AREA TOPICS ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch major area topics",
+    });
+  }
 };
 
 // Get One Topic By ID

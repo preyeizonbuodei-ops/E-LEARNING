@@ -1,126 +1,113 @@
+
 import { motion } from "motion/react";
-import { ArrowRight, Settings, RobotArm, School, Zap, Fuel, FlaskConical} from 'lucide-react';
+import {
+  ArrowRight,
+  Settings,
+  RobotArm,
+  School,
+  Zap,
+  Fuel,
+  FlaskConical,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 
-
+const departments = [
+  {
+    name: "Mechanical Engineering",
+    icon: Settings,
+    color: "bg-amber-500",
+  },
+  {
+    name: "Mechatronics Engineering",
+    icon: RobotArm,
+    color: "bg-cyan-600",
+  },
+  {
+    name: "Civil Engineering",
+    icon: School,
+    color: "bg-green-600",
+  },
+  {
+    name: "Electrical Electronics Engineering",
+    icon: Zap,
+    color: "bg-orange-500",
+  },
+  {
+    name: "Petroleum and Gas Engineering",
+    icon: Fuel,
+    color: "bg-blue-950",
+  },
+  {
+    name: "Chemical Engineering",
+    icon: FlaskConical,
+    color: "bg-emerald-600",
+  },
+];
 
 const ResearchDepartment = () => {
   return (
-    <>
-      <div className="font-bold text-left mt-5 ml-16">
-        <p className="text-amber-500">Explore</p>
-        <h1  className="relative mt-0 mb-1 w-fit text-left font-bold ">OUR ENGINEERING DEPARTMENTS</h1>
+    <section className="w-full overflow-hidden px-4 py-10 sm:px-6 sm:py-14 md:px-8 lg:px-12 lg:py-16">
+      {/* Section heading */}
+      <div className="mx-auto mb-8 w-full max-w-7xl sm:mb-10">
+        <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-amber-500 sm:text-base">
+          Explore
+        </p>
+
+        <h2 className="text-2xl font-bold leading-tight text-gray-900 sm:text-3xl md:text-4xl">
+          Our Engineering Departments
+        </h2>
+
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base">
+          Discover the engineering disciplines driving research, innovation,
+          and practical solutions to real-world challenges.
+        </p>
       </div>
 
+      {/* Department cards */}
       <motion.div
-      initial={{ opacity: 0, y: 70 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: 0}}
-      transition={{ duration: 0.5 }}
-      // whileHover={{ y: -14 }}
-      className="grid mr-2 ml-2 grid-cols-2 lg:grid-cols-6 md:grid-cols-6 gap-2 sm:mr-15 sm:ml-15 mt-1" >
-    
-    <motion.div 
-    transition={{duration: 0.2 }}
-    whileHover={{ y: -8 }}
-    className="flex flex-col bg-amber-300 text-white border-amber-500 border items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.20)] p-3 rounded-lg hover:cursor-pointer  transition duration-300">
-      
-      
-      <div className="pt-4 pb-1 ">
-        <Settings className="size-15  rounded-full p-3"/>
-       </div>
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.5 }}
+        className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-4 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6"
+      >
+        {departments.map((department, index) => {
+          const Icon = department.icon;
 
-      <div className="flex flex-col items-center ">
-        <h1 className="font-bold mb-3">Mechanical Enineering</h1>
-        <NavLink className="flex mt-1 gap-5 text-taupe-50 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
-      </div>
+          return (
+            <motion.article
+              key={department.name}
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              whileHover={{ y: -5 }}
+              className={`flex min-w-0 flex-col items-center rounded-xl ${department.color} p-5 text-center text-white shadow-md transition-shadow duration-300 hover:shadow-xl sm:p-6`}
+            >
+              <div className="mb-4 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/20 sm:h-[72px] sm:w-[72px]">
+                <Icon
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                />
+              </div>
 
-    </motion.div>
+              <h3 className="flex min-h-12 w-full items-center justify-center text-sm font-bold leading-5 sm:text-base">
+                {department.name}
+              </h3>
 
-    <motion.div 
-      transition={{duration: 0.2 }}
-      whileHover={{ y: -8 }}
-    className="flex flex-col  bg-cyan-500 text-white border items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.20)] p-3 rounded-lg hover:cursor-pointer  transition duration-300">
-      <div className="pt-4 pb-1">
-        <RobotArm className="size-15  text-white rounded-full p-3"/>
-       </div>
-
-      <div className="flex flex-col items-center text-center">
-        <h1 className="font-bold mb-1">Mechantronics Enineering</h1>
-        <NavLink className="flex mt-1 gap-5 items-center text-white" to="/">Learn More <ArrowRight /> </NavLink>
-      </div>
-
-    </motion.div>
-
-    <motion.div 
-      transition={{duration: 0.2 }}
-      whileHover={{ y: -8 }}
-    className="flex flex-col bg-green-500 border-green-500 border items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.20)] p-3 rounded-lg hover:cursor-pointer  transition duration-300">
-      <div className="pt-4 pb-1">
-        <School className="size-15 text-white rounded-full p-3"/>
-       </div>
-
-      <div flex flex-col items-center>
-        <h1 className="font-bold mb-1 text-white">Civil Engineering</h1>
-        <NavLink className="flex mt-1 text-white gap-5 items-center border-green-500" to="/">Learn More <ArrowRight /> </NavLink>
-      </div>
-
-    </motion.div>
-
-    <motion.div 
-      transition={{duration: 0.5 }}
-      whileHover={{ y: -8 }}
-      
-    className="flex flex-col bg-orange-500 text-white border-orange-500 border items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.20)] p-3 rounded-lg hover:cursor-pointer  transition duration-300">
-      <div className="pt-4 pb-1">
-        <Zap className="size-15  text-white rounded-full p-3"/>
-       </div>
-
-      <div className="flex flex-col items-center text-center">
-        <h1 className="font-bold mb-1 text-white">Electrical Electronics Engineering</h1>
-        <NavLink className="flex mt-1 gap-5 items-center text-white" to="/">Learn More <ArrowRight /> </NavLink>
-      </div>
-
-    </motion.div>
-    
-    <motion.div 
-      transition={{duration: 0.5 }}
-      whileHover={{ y: -8 }}
-      
-    className="flex flex-col bg-blue-950 text-white border-blue-950 border items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.20)] p-3 rounded-lg hover:cursor-pointer  transition duration-300">
-      <div className="pt-4 pb-1">
-        <Fuel className="size-15 text-white rounded-full p-3"/>
-       </div>
-
-      <div className="flex flex-col items-center">
-        <h1 className="font-bold mb-1 text-center text-white">Petroleum Engineering</h1>
-        <NavLink className="flex mt-1 gap-5 items-center text-white" to="/">Learn More <ArrowRight /> </NavLink>
-      </div>
-
-    </motion.div>
-
-    <motion.div 
-      transition={{duration: 0.5 }}
-      whileHover={{ y: -8 }}
-      
-    className="flex flex-col bg-green-500 text-white border-green-500 border-2 items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.20)] p-3 rounded-lg hover:cursor-pointer  transition duration-300">
-      <div className="pt-4 pb-4">
-        <FlaskConical className="size-15  text-white rounded-full p-3"/>
-       </div>
-
-      <div className="flex flex-col items-center">
-        <h1 className="font-bold mb-1 text-white">Chemical Engineering</h1>
-        <NavLink className="flex mt-1 gap-5 items-center text-white" to="/">Learn More <ArrowRight /> </NavLink>
-      </div>
-
-    </motion.div>
-    
-
-    </motion.div>
-    
-    
-    </>
-    
+              <NavLink
+                to="/"
+                className="mt-4 inline-flex items-center justify-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                Learn More
+                <ArrowRight className="h-4 w-4 shrink-0" />
+              </NavLink>
+            </motion.article>
+          );
+        })}
+      </motion.div>
+    </section>
   );
 };
 

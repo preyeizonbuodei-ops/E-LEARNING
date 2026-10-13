@@ -43,7 +43,7 @@ export const useDepartmentStore = create((set) => ({
         set({ isLoading: true, error: null });
 
         try {
-            const response = await axios.get(`${API_URL}/get-departments`);
+            const response = await axios.get(`${API_URL}/get-department`);
 
             set({
                 departments: response.data.departments,

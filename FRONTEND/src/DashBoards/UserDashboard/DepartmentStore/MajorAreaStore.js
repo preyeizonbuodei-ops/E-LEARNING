@@ -71,29 +71,34 @@ export const useAdminMajorAreaStore = create((set) => ({
     },
 
     // Get major areas, optionally filtered by department
-    getMajorAreas: async (departmentId) => {
-        set({ isLoading: true, error: null });
+   getMajorAreas: async (departmentId) => {
+  set({ isLoading: true, error: null });
 
-        try {
-            const response = await axios.get(`${API_URL}/major-areas`, {
-                params: departmentId ? { departmentId } : {},
-            });
+  try {
+    const response = await axios.get(
+      `${API_URL}/get-major-area`,
+      {
+        params: departmentId ? { departmentId } : {},
+        withCredentials: true,
+      }
+    );
 
-            set({
-                majorAreas: response.data.majorAreas,
-                isLoading: false,
-            });
+    set({
+      majorAreas: response.data.majorAreas,
+      isLoading: false,
+    });
 
-            return response.data.majorAreas;
-        } catch (error) {
-            set({
-                isLoading: false,
-                error:
-                    error.response?.data?.message ||
-                    "Failed to retrieve major areas",
-            });
+    return response.data.majorAreas;
+  } catch (error) {
+    set({
+      isLoading: false,
+      error:
+        error.response?.data?.message ||
+        "Failed to retrieve major areas",
+    });
 
-            throw error;
-        }
-    },
+    throw error;
+  }
+},
+
 }));
