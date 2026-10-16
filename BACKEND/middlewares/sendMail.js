@@ -11,6 +11,8 @@ const transport = nodeMailer.createTransport({
     },
 });
 
+console.log("sendMail.js loaded");
+
 transport.verify((error, success) => {
     if (error) {
         console.log("Email connection failed:", error);
