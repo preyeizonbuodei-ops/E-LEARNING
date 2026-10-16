@@ -4,16 +4,17 @@ const { AdminRegister, adminVerifyVerificationCode, AdminLogOut, AdminLogIn } = 
 const { ValidateAdminToken } = require('../middlewares/ValidateAdminToken');
 const { AdminCheckAuth } = require("../authControllers/Admin/AdminCheckAuth");
 const { authorizedAdminRoles } = require("../middlewares/RoleControl");
-const { CreateLesson, GetCourses,  GetLessons} = require('../authControllers/CoursesUser/LessonController');
-const { CreateCourse } = require("../authControllers/Admin/CourseController");
-const { CreateTopic, GetTopics } = require("../authControllers/Admin/TopicController");
+const { CreateLesson, GetCourses,  GetLessons, GetLessonsByCourse, UpdateLesson, DeleteLesson} = require('../authControllers/CoursesUser/LessonController');
+const { CreateCourse, DeleteCourse, UpdateCourse } = require("../authControllers/Admin/CourseController");
+const { CreateTopic, GetTopics, UpdateTopic, DeleteTopic } = require("../authControllers/Admin/TopicController");
 const { GetAdminRefreshToken } = require("../authControllers/adminRegister");
 const { CreateDepartment, getDepartments } = require("../authControllers/Admin/DepartmentController/DepartmentController");
 const { createMajorArea, getMajorAreas, getMajorAreaById } = require("../authControllers/Admin/DepartmentController/MajorAreaController");
 const { createMajorAreaTopic, getAllMajorAreaTopics, getMajorAreaTopicById } = require("../authControllers/Admin/DepartmentController/MajorTopicController");
 const { createResearchPaper } = require("../authControllers/Admin/DepartmentController/ResearchAreaController");
 const { getAdminDashboardStats } = require("../authControllers/Admin/GetAdminStatController");
-const { getAllUsers, updateUser, deleteUser } = require("../authControllers/register")
+const { getAllUsers, updateUser, deleteUser } = require("../authControllers/register");
+const { CreateLimiter, AuthLimiter } = require("../middlewares/RateLimit");
 
 const adminRouter = express.Router();
 
@@ -24,36 +25,48 @@ adminRouter.patch('/update-user/:userId', ValidateAdminToken, authorizedAdminRol
 adminRouter.delete('/delete-user/:userId', ValidateAdminToken, authorizedAdminRoles("Admin"), deleteUser)
 
 // Admin Routes
-adminRouter.post('/create-course',  ValidateAdminToken, authorizedAdminRoles("Admin"), CreateCourse)
-adminRouter.post('/create-lesson', ValidateAdminToken, authorizedAdminRoles("Admin"), CreateLesson )
-adminRouter.get('/get-lesson', ValidateAdminToken, authorizedAdminRoles("Admin"), GetLessons)
+adminRouter.post('/create-course',   ValidateAdminToken, authorizedAdminRoles("Admin"), CreateLimiter, CreateCourse)
 adminRouter.get('/get-courses', ValidateAdminToken, authorizedAdminRoles("Admin"), GetCourses)
+adminRouter.patch('/update-course/:courseId', ValidateAdminToken, authorizedAdminRoles("Admin"), UpdateCourse)
+adminRouter.delete('/delete-course/:courseId', ValidateAdminToken, authorizedAdminRoles("Admin"), DeleteCourse)
+
+adminRouter.post('/create-lesson', ValidateAdminToken, authorizedAdminRoles("Admin"), CreateLimiter, CreateLesson )
+adminRouter.get('/get-lesson', ValidateAdminToken, authorizedAdminRoles("Admin"), GetLessons)
+adminRouter.get('/courses/:courseId/lessons', ValidateAdminToken, authorizedAdminRoles("Admin"), GetLessonsByCourse)
+adminRouter.patch( "/update-lesson/:lessonId", ValidateAdminToken, authorizedAdminRoles("Admin"), UpdateLesson );
+adminRouter.delete("/delete-lesson/:lessonId", ValidateAdminToken, authorizedAdminRoles("Admin"), DeleteLesson );
+
+
+
 adminRouter.post('/lessons/:lessonId/topics', ValidateAdminToken, authorizedAdminRoles("Admin"), CreateTopic)
 adminRouter.get("/lessons/:lessonId/topics", ValidateAdminToken, authorizedAdminRoles("Admin"), GetTopics)
+adminRouter.patch("/topics/:topicId", ValidateAdminToken, authorizedAdminRoles("Admin"), UpdateTopic);
+adminRouter.delete ("/topics/:topicId", ValidateAdminToken, authorizedAdminRoles("Admin"), DeleteTopic);
+
 
 // Department Routes
-adminRouter.post("/create-department", CreateDepartment)
+adminRouter.post("/create-department", ValidateAdminToken, authorizedAdminRoles("Admin"), CreateLimiter, CreateDepartment)
 adminRouter.get("/get-department", getDepartments)
-adminRouter.post("/create-major-area", createMajorArea)
-adminRouter.get("/get-major-area", getMajorAreas)
-adminRouter.get("/major-area/:majorAreaId", getMajorAreaById)
+
+adminRouter.post("/create-major-area", ValidateAdminToken, authorizedAdminRoles("Admin"), CreateLimiter, createMajorArea)
+adminRouter.get("/get-major-area", ValidateAdminToken, authorizedAdminRoles("Admin"),  getMajorAreas)
+adminRouter.get("/major-area/:majorAreaId", ValidateAdminToken, authorizedAdminRoles("Admin"),  getMajorAreaById)
 // adminRouter.post("/major-area/:departmentId", CreateDepartment)
 
 // Major Topic Route
-adminRouter.post("/create-major-area-topic", createMajorAreaTopic)
-adminRouter.get("/get-major-area-topic", getAllMajorAreaTopics)
-adminRouter.get("/get-major-area-topic/:majorTopicId", getMajorAreaTopicById)
+adminRouter.post("/create-major-area-topic", ValidateAdminToken, authorizedAdminRoles("Admin"), CreateLimiter, createMajorAreaTopic)
+adminRouter.get("/get-major-area-topic", ValidateAdminToken, authorizedAdminRoles("Admin"),  getAllMajorAreaTopics)
+adminRouter.get("/get-major-area-topic/:majorTopicId", ValidateAdminToken, authorizedAdminRoles("Admin"),  getMajorAreaTopicById)
 
 // Research Paper route
-adminRouter.post("/create-research-paper", createResearchPaper)
+adminRouter.post("/create-research-paper", ValidateAdminToken, authorizedAdminRoles("Admin"), CreateLimiter, createResearchPaper)
 
 // Admin Control Routes
-adminRouter.post("/register", AdminRegister)
-adminRouter.patch("/admin-verify-email", adminVerifyVerificationCode )
-adminRouter.post("/login", AdminLogIn);
+adminRouter.post("/register", AuthLimiter, AdminRegister)
+adminRouter.patch("/admin-verify-email",  adminVerifyVerificationCode )
+adminRouter.post("/login", AuthLimiter, AdminLogIn);
 adminRouter.post("/logout", ValidateAdminToken,  AdminLogOut);
 adminRouter.get("/admin-check-auth", ValidateAdminToken, AdminCheckAuth)
 adminRouter.post("/admin-refresh-token", GetAdminRefreshToken);
-
-
 module.exports = adminRouter
+

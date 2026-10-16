@@ -1,8 +1,8 @@
-const joi = require("joi");
 
-exports.ValidateCourse = joi.object({
+const Joi = require("joi");
 
-    courseType: joi.string()
+exports.ValidateCourse = Joi.object({
+    courseType: Joi.string()
         .valid("semester", "general")
         .required()
         .messages({
@@ -10,44 +10,55 @@ exports.ValidateCourse = joi.object({
             "any.required": "Course type is required"
         }),
 
-    courseScope: joi.string()
+    courseScope: Joi.string()
         .valid("shared", "department")
         .when("courseType", {
             is: "semester",
-            then: joi.required(),
-            otherwise: joi.optional()
+            then: Joi.required(),
+            otherwise: Joi.optional()
         }),
 
-    department: joi.string()
+    department: Joi.string()
+        .trim()
         .allow("")
         .when("courseScope", {
             is: "department",
-            then: joi.required(),
-            otherwise: joi.optional()
+            then: Joi.required(),
+            otherwise: Joi.optional()
         }),
 
-    level: joi.string()
+    level: Joi.string()
         .when("courseType", {
             is: "semester",
-            then: joi.required(),
-            otherwise: joi.optional()
+            then: Joi.required(),
+            otherwise: Joi.optional()
         }),
 
-    semester: joi.string()
+    semester: Joi.string()
         .valid("first", "second")
         .when("courseType", {
             is: "semester",
-            then: joi.required(),
-            otherwise: joi.optional()
+            then: Joi.required(),
+            otherwise: Joi.optional()
         }),
 
-    courseTitle: joi.string()
-        .required(),
+    courseTitle: Joi.string()
+        .trim()
+        .required()
+        .messages({
+            "string.empty": "Course title is required",
+            "any.required": "Course title is required"
+        }),
 
-    courseCode: joi.string()
-        .required(),
+    courseCode: Joi.string()
+        .trim()
+        .required()
+        .messages({
+            "string.empty": "Course code is required",
+            "any.required": "Course code is required"
+        }),
 
-    description: joi.string()
+    description: Joi.string()
         .allow("")
         .optional()
 });

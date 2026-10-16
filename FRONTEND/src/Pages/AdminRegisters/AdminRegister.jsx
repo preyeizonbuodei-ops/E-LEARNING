@@ -239,7 +239,8 @@ const AdminRegister = () => {
                             </motion.button>
 
 
-                            <div className="flex justify-between mb-6">
+                            <div disabled={isLoading} 
+                            className="flex justify-between mb-6">
                                 <h3>
                                     Already have an account?
                                 </h3>

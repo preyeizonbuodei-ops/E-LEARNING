@@ -20,7 +20,7 @@ exports.ValidateToken = (req, res, next) => {
         const decode = jwt.verify(token, process.env.JWT_SECRET);
 
         req.user = decode;
-        console.log("The decoded user is:", req.user);
+        
 
         next();
     } catch (error) {

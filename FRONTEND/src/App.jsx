@@ -36,6 +36,7 @@ import AdminVerifyEmail from "./Pages/AdminRegisters/AdminVerifyEmail";
 import CreateLessonForm from "./DashBoards/AdminDashboard/AdminPageForms/CreateLesson";
 import CreateTopicForm from "./DashBoards/AdminDashboard/AdminPageForms/CreateTopic"
 import CreateDepartment from "./DashBoards/AdminDashboard/AdminPageForms/CreateDepartment";
+import AdminSettings from "./DashBoards/AdminDashboard/AdminPages/AdminSettings";
 
 // USER
 import UserLanding from "./DashBoards/UserDashboard/UserPages/UserLanding";
@@ -66,6 +67,7 @@ import AdminGuestRoute from "./AdminGuestRoute";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 
 import "./App.css";
+
 
 
 
@@ -133,7 +135,7 @@ function App() {
             />
 
             <Route
-                path="/get-news"
+                path="/news"
                 element={
                     <>
                         <Navbar />
@@ -259,6 +261,12 @@ function App() {
                         path="users"
                         element={<UserData />}
                     />
+
+                    <Route
+                        path="settings"
+                        element={<AdminSettings />}
+                    />
+                    
                 </Route>
 
                 <Route
@@ -380,10 +388,7 @@ function App() {
                         element={<Settings />}
                     />
 
-                    <Route
-                path="/departments/:departmentId"
-                element={<DepartmentDetails />}
-                />
+                    
 
                 <Route
                     path="/areas/:departmentId/:areaId"
@@ -406,7 +411,10 @@ function App() {
                     {/* We will add this after creating Topics */}
 
                 </Route>
-
+                    <Route
+                path="/departments/:departmentId"
+                element={<DepartmentDetails />}
+                />
             </Route>
 
         </Routes>

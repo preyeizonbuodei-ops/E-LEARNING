@@ -1,3 +1,4 @@
+
 import axios from "axios";
 import { create } from "zustand";
 
@@ -13,15 +14,9 @@ const useTopicStore = create(() => ({
                 topicData
             );
 
-            console.log("CREATE TOPIC RESPONSE:", response.data);
-
             return response.data;
         } catch (error) {
-            console.log(
-                "CREATE TOPIC ERROR:",
-                error.response?.data || error
-            );
-
+            console.log("CREATE TOPIC ERROR:", error.response?.data || error);
             throw error;
         }
     },
@@ -32,15 +27,36 @@ const useTopicStore = create(() => ({
                 `${API_URL}/lessons/${lessonId}/topics`
             );
 
-            console.log("GET TOPICS RESPONSE:", response.data);
+            return response.data;
+        } catch (error) {
+            console.log("GET TOPICS ERROR:", error.response?.data || error);
+            throw error;
+        }
+    },
+
+    updateTopic: async (topicId, topicData) => {
+        try {
+            const response = await axios.patch(
+                `${API_URL}/topics/${topicId}`,
+                topicData
+            );
 
             return response.data;
         } catch (error) {
-            console.log(
-                "GET TOPICS ERROR:",
-                error.response?.data || error
+            console.log("UPDATE TOPIC ERROR:", error.response?.data || error);
+            throw error;
+        }
+    },
+
+    deleteTopic: async (topicId) => {
+        try {
+            const response = await axios.delete(
+                `${API_URL}/topics/${topicId}`
             );
 
+            return response.data;
+        } catch (error) {
+            console.log("DELETE TOPIC ERROR:", error.response?.data || error);
             throw error;
         }
     }

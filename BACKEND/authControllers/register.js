@@ -62,11 +62,21 @@ exports.Register = async (req, res) => {
 
 
             const info = await transport.sendMail({
-            from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
-            to: newUser.email,
-            subject: "verification Code",
-            html: "<h1>" + verificationToken + "<h1>"
-        })
+                from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+                to: newUser.email,
+                subject: "StudStore Account Verification Code",
+                text: `Your Verification Code is: ${verificationToken}. Keep it secure and never share it.`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 24px;">
+                        <h2>StudStore Account Verification Code</h2>
+                        <p>Keep this key secure and never share it with anyone.</p>
+                        <div style="padding: 16px; background: #f1f5f9; font-size: 20px; font-weight: bold; word-break: break-all;">
+                            ${verificationToken}
+                        </div>
+                        <p>Thanks For Chosing StudStore.</p>
+                    </div>
+                `
+            });
 
             if(info.accepted[0] === newUser.email) {
                 const hashedCodeValue = hmacProcess(verificationToken, process.env.HMAC_VERIFICATION_CODE_SECRET);
@@ -190,6 +200,93 @@ exports.verifyVerificationCode = async (req, res) => {
         delete user.confirmPassword;
         delete user.verificationToken;
         delete user.verificationTokenExpiresAt;
+
+            
+        await transport.sendMail({
+            from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+            to: existingUser.email,
+            subject: "Welcome to StudStore — Learn. Explore. Innovate!",
+            text: `Welcome to StudStore, ${existingUser.username}! We're excited to have you join our growing community of learners, innovators, and future engineers. Thank you for choosing StudStore. Empowering learning. Inspiring innovation.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 24px; color: #1e293b; line-height: 1.7;">
+
+                    <h2 style="color: #2563eb; text-align: center;">
+                        Welcome to StudStore — Your Journey to Learning and Innovation Starts Here!
+                    </h2>
+
+                    <p>Hi ${existingUser.username},</p>
+
+                    <h1 style="text-align: center;">Welcome to StudStore! 🎉</h1>
+
+                    <p>
+                        We're excited to have you join our growing community of learners,
+                        innovators, and future engineers.
+                    </p>
+
+                    <p>
+                        StudStore was created to make learning more accessible, help
+                        students grow academically, and connect people with the knowledge
+                        and resources they need to succeed.
+                    </p>
+
+                    <p><strong>With StudStore, you can:</strong></p>
+
+                    <h3>📚 Learn Smarter</h3>
+                    <p>Explore courses, lessons, and topics designed to support your academic journey.</p>
+
+                    <h3>💡 Expand Your Knowledge</h3>
+                    <p>Discover learning materials, educational videos, and useful resources.</p>
+
+                    <h3> Explore Engineering Research</h3>
+                    <p>Discover research papers, academic publications, and ideas that inspire innovation.</p>
+
+                    <h3> Grow and Innovate</h3>
+                    <p>Build your knowledge, strengthen your skills, and take steps toward your future goals.</p>
+
+                    <p>
+                        We believe that every great innovation begins with curiosity,
+                        learning, and the courage to explore new ideas. Whether you're
+                        preparing for an examination, deepening your understanding of
+                        engineering, or discovering new research, StudStore is here to
+                        support your journey.
+                    </p>
+
+                    <div style="padding: 16px; background: #eff6ff; border-radius: 8px; text-align: center; margin: 24px 0;">
+                        <h2 style="color: #1d4ed8;">
+                            Your journey to knowledge, growth, and innovation starts here.
+                        </h2>
+                    </div>
+
+                    <p>
+                        Thank you for choosing StudStore. We're glad you're part of our
+                        community, and we look forward to being part of your academic journey.
+                    </p>
+
+                    <p>
+                        Ready to get started? Log in to your account and start exploring!
+                    </p>
+
+                    <h2 style="text-align: center; color: #2563eb;">
+                        Learn. Explore. Innovate.
+                    </h2>
+
+                    <p>Warm regards,</p>
+
+                    <h2>The StudStore Team</h2>
+
+                    <p style="color: #64748b;">
+                        Empowering learning. Inspiring innovation.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+                    <p style="font-size: 12px; color: #64748b; text-align: center;">
+                        Thank you for choosing StudStore.
+                    </p>
+
+                </div>
+            `
+        });
 
 
         return res.status(200).json({

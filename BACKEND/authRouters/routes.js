@@ -17,6 +17,7 @@ const { getMajorAreas, getMajorAreaById } = require("../authControllers/Admin/De
 const { getAllMajorAreaTopics, getMajorAreaTopicById } = require("../authControllers/Admin/DepartmentController/MajorTopicController");
 const { ContactFormController } = require("../authControllers/ContactFormController");
 const { getAllResearchPapers, getResearchPaperById } = require("../authControllers/Admin/DepartmentController/ResearchAreaController");
+const { AuthLimiter } = require("../middlewares/RateLimit");
 
 
 
@@ -26,8 +27,8 @@ const router = express.Router();
 // user Control Routes
 router.get("/check-auth", ValidateToken, checkAuth)
 router.get("/me", ValidateToken, authorizedUserRoles("Student"), GetCurrentUser);
-router.post("/register", Register);
-router.post("/login", Login);
+router.post("/register", AuthLimiter, Register);
+router.post("/login", AuthLimiter, Login);
 router.post("/logout", ValidateToken, Logout);
 router.post("/refresh-token", getRefreshToken);
 
@@ -56,10 +57,10 @@ router.get("/get-major-area-topic", ValidateToken, authorizedUserRoles("Student"
 router.get("/get-major-area-topic/:majorTopicId", ValidateToken, authorizedUserRoles("Student"), getMajorAreaTopicById);
 
 // Email Routes
-router.patch("/verify-verification-code", verifyVerificationCode);
-router.patch("/change-password", ValidateToken, ChangePassword);
-router.patch("/forgot-password",  ForgotPasswordEmail);
-router.patch("/verify-forgot-password", VerifyForgotPasswordCode);
+router.patch("/verify-verification-code", AuthLimiter, verifyVerificationCode);
+router.patch("/change-password", AuthLimiter, ValidateToken, ChangePassword);
+router.patch("/forgot-password", AuthLimiter, ForgotPasswordEmail);
+router.patch("/verify-forgot-password", AuthLimiter, VerifyForgotPasswordCode);
 router.patch("/reset-password", ResetPassword);
 
 // Research Papers route

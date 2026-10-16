@@ -21,7 +21,7 @@ exports.ValidateAdminToken = async (req, res, next) => {
         const decodedAdmin = jwt.verify( adminToken, process.env.JWT_SECRET );
 
         req.admin = decodedAdmin;
-        console.log("The decoded Admin is:", req.admin);
+        
 
         next();
 

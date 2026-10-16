@@ -11,6 +11,7 @@ import {
     ChartBarIncreasing,
     Menu,
     X,
+    HousePlug,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
@@ -95,6 +96,7 @@ const UserSideBar = ({ isOpen, setIsOpen }) => {
                             }`
                         }
                     >
+                        <HousePlug />
                         <h1>Home page</h1>
                     </NavLink>
 
@@ -148,20 +150,7 @@ const UserSideBar = ({ isOpen, setIsOpen }) => {
                     </NavLink>
 
                     {/* Department */}
-                    <NavLink
-                        to="/me/department"
-                        onClick={handleNavigation}
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 rounded py-3 px-3 transition duration-500 ${
-                                isActive
-                                    ? "bg-white text-black"
-                                    : "hover:bg-white hover:text-black"
-                            }`
-                        }
-                    >
-                        <House />
-                        <h1>My Academic Space</h1>
-                    </NavLink>
+
 
                     {/* Resources */}
                     

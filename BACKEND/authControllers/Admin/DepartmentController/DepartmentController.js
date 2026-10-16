@@ -121,3 +121,11 @@ exports.getDepartmentById = async (req, res) => {
         });
     }
 };
+
+exports.DeleteDepartment = async ( req, res ) => {
+    try {
+        
+    } catch (error) {
+        console.log(error)
+    }
+}

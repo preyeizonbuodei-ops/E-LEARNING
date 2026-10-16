@@ -1,53 +1,51 @@
+
 const express = require("express");
 const dotenv = require("dotenv").config();
 const cors = require("cors");
 const connectDB = require("./ConnectDB/ConnectDB");
 const router = require("./authRouters/routes");
-const adminRouter = require("./authRouters/adminRoutes")
+const adminRouter = require("./authRouters/adminRoutes");
 const { default: mongoose } = require("mongoose");
-const cookieparser = require('cookie-parser')
+const cookieparser = require("cookie-parser");
+
+
+// Import rate limiters
+const { GeneralRateLimiter } = require("./middlewares/RateLimit");
+
 const app = express();
 
+// Middlewares
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+        credentials: true,
+    })
+);
 
-
-// middle wares
-app.use(cors({origin: "http://localhost:5173", credentials: true}))
 app.use(express.json());
-app.use(cookieparser())
-// Routes
+app.use(cookieparser());
+
+// Home route
 app.get("/", (req, res) => {
-    res.status(200).json({ sucess: true, message: "Welcome to the Home Page"});
+    res.status(200).json({
+        success: true,
+        message: "Welcome to the Home Page",
+    });
+
     console.log("welcome to the home page");
-})
-// User Routes
-app.use("/api/v1/users", router);
+});
 
-// Admin Routes
-app.use("/api/v1/admin", adminRouter);
+// User Routes with general rate limiting
+app.use("/api/v1/users", GeneralRateLimiter, router);
 
+// Admin Routes with general rate limiting
+app.use("/api/v1/admin", GeneralRateLimiter, adminRouter);
 
+connectDB();
 
-connectDB();    
-
-
-// starts the server
+// Start the server
 const PORT = process.env.PORT;
+
 app.listen(PORT, () => {
-    console.log(`server is running at PORT, ${PORT}` )
-})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    console.log(`Server is running at PORT ${PORT}`);
+});

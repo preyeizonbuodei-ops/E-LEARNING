@@ -15,10 +15,11 @@ import {
 } from "lucide-react";
 
 import { NavLink, Outlet } from "react-router-dom";
+import { AdminRegister } from "../../../Store/AdminStore";
 
 const AdminSidebar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  const Logout = AdminRegister((state) => state.Logout);
   const navLinkClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-lg px-3 py-3 transition duration-200 ${
       isActive
@@ -121,15 +122,26 @@ const AdminSidebar = () => {
             <span>Users</span>
           </NavLink>
 
-          <div className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 transition duration-200 hover:bg-white hover:text-blue-950">
-            <Settings size={20} />
+          <NavLink
+            to="/admin-dashboard/settings"
+            onClick={closeSidebar}
+            className={navLinkClass}
+          >
+            <Users2 size={20} />
             <span>Settings</span>
-          </div>
+          </NavLink>
 
-          <div className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 transition duration-200 hover:bg-white hover:text-blue-950">
-            <LogOutIcon size={20} />
-            <span>Logout</span>
-          </div>
+          <button
+              className="flex gap-2 rounded py-3 px-3 hover:bg-white hover:text-black"
+              onClick={async () => {
+                  await Logout();
+                  setIsOpen(false);
+                  navigate("/admin-login");
+              }}
+          >
+              <LogOutIcon />
+              Logout
+          </button>
         </nav>
       </aside>
 

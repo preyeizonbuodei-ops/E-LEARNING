@@ -1,26 +1,23 @@
+
 import { Navigate, Outlet } from "react-router-dom";
 import { AdminRegister } from "./Store/AdminStore";
 
-
 const AdminGuestRoute = () => {
+    const {
+        admin,
+        isAuthenticated,
+        isCheckingAuth
+    } = AdminRegister();
 
-        const isAuthenticated = AdminRegister(
-            (state) => state.isAuthenticated
-        )
+    if (isCheckingAuth) {
+        return <div>Checking admin authentication...</div>;
+    }
 
-        const isCheckingAuth = AdminRegister(
-            (state) => state.isCheckingAuth
-        )
+    if (isAuthenticated && admin?.role === "Admin") {
+        return <Navigate to="/admin-dashboard" replace />;
+    }
 
-        if(isCheckingAuth) {
-            return <div>Loading....</div>
-        }
-
-        if(isAuthenticated) {
-            return <Navigate to="/admin-dashboard" replace/>
-        }
-
-        return <Outlet />;
-}
+    return <Outlet />;
+};
 
 export default AdminGuestRoute;

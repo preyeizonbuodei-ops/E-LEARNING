@@ -9,7 +9,7 @@ const VerifyEmail = () => {
     const initialValue = [ "", "", "", "", "", "" ];
     const [ code, setCode ] = useState(initialValue);
     const inputRefs = useRef([]);
-
+    const [loading, setLoading] = useState(false);
     const location = useLocation();
     const email = location.state?.email;
     const navigate = useNavigate();
@@ -18,28 +18,28 @@ const VerifyEmail = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if(!code.every(digit => digit !== "")) {
-            return
+        if (!code.every((digit) => digit !== "")) {
+            return;
         }
 
         const verificationCode = code.join("");
 
         try {
+            setLoading(true);
 
-            const response = await verifyEmailSent(email, verificationCode)
+            const response = await verifyEmailSent(email, verificationCode);
 
-            console.log("Verification response:", response);
-
-            if(response.success) {
-                navigate("/me");
-            }else{
-                console.log("invalid email")
+            if (response.success) {
+            navigate("/me");
+            } else {
+            console.log("Invalid email");
             }
-
-        } catch(error) {
-            console.log(error)
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
         }
-    };
+        };
 
 
     const handleKeyChange = (index, value) => {
@@ -112,41 +112,52 @@ const VerifyEmail = () => {
         }
     };
 
-  return (
+  
+return (
     <>
-        <div className="w-full min-h-screen flex relative justify-center items-center">
-            <div className="bg-blue-950 w-160 h-80 rounded-lg">
-                <h1 className="font-bold text-[29px] text-white text-center mt-8">Verify Your Account</h1>
-                <p className="text-white font-bold mt-4 text-center">A 6 digit verification code has been sent to your email. put the code below</p>
+        <div className="w-full min-h-screen flex justify-center items-center px-4 py-8">
+            <div className="bg-blue-950 w-full max-w-2xl min-h-80 rounded-lg px-4 sm:px-8 py-6">
+                <h1 className="font-bold text-2xl sm:text-[29px] text-white text-center mt-2">
+                    Verify Your Account
+                </h1>
+
+                <p className="text-white font-bold mt-4 text-center text-sm sm:text-base">
+                    A 6 digit verification code has been sent to your email. put the code below
+                </p>
+
                 <form onSubmit={handleSubmit}>
-                    <div className="flex justify-center gap-5">
-                        { code.map((digit, index) => (
-                            <input 
-                            onChange={(e) => handleKeyChange(index, e.target.value) }
-                            onKeyDown={(e) => handleKeyDown(index, e)}
-                            onPaste={handlePaste}
-                            key={index}
-                            value={digit}
-                            maxLength={1}
-                            ref={(el) => {inputRefs.current[index] = el;
-                                
-                            }}
-                            className="w-12 h-12 text-white border border-amber-500 font-bold text-[29px] text-center rounded-lg mt-9"
+                    <div className="flex justify-center gap-2 sm:gap-5 flex-wrap">
+                        {code.map((digit, index) => (
+                            <input
+                                onChange={(e) => handleKeyChange(index, e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(index, e)}
+                                onPaste={handlePaste}
+                                key={index}
+                                value={digit}
+                                maxLength={1}
+                                ref={(el) => {
+                                    inputRefs.current[index] = el;
+                                }}
+                                className="w-10 h-10 sm:w-12 sm:h-12 text-white border border-amber-500 font-bold text-xl sm:text-[29px] text-center rounded-lg mt-6"
                             />
                         ))}
+                    </div>
 
-                        
-                        
-                    </div> 
-                        <div className="flex justify-center">
-                            <button className=" text-center w-80 text-white font-bold py-2 bg-amber-500 rounded-lg mt-9 hover:bg-amber-600 transition">Verify</button>  
-                        </div>
+                    <div className="flex justify-center mt-8">
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full max-w-xs text-center text-white font-bold py-2 bg-amber-500 rounded-lg hover:bg-amber-600 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {loading ? "Verifying..." : "Verify"}
+                        </button>
+                    </div>
                 </form>
-                
             </div>
         </div>
     </>
-  )
+);
+
 }
 
 export default VerifyEmail

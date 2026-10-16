@@ -25,7 +25,7 @@ const Resource = () => {
       <div>
         <h1 className="font-bold mb-3">Library</h1>
         <p className="text-gray-500 ">Access Books, journals, databases, and digital resources</p>
-        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
+        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/me/courses">Learn More <ArrowRight /> </NavLink>
       </div>
 
     </motion.div>
@@ -43,7 +43,7 @@ const Resource = () => {
       <div>
         <h1 className="font-bold mb-3">Downloads</h1>
         <p className="text-gray-500 ">Froms, guides, and important documents for students.</p>
-        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
+        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/me/learning-materials">Learn More <ArrowRight /> </NavLink>
       </div>
 
     </motion.div>
@@ -63,7 +63,7 @@ const Resource = () => {
       <div>
         <h1 className="font-bold mb-3">Academic Calendar</h1>
         <p className="text-gray-500 ">Important dates, examination schedules and academic events.</p>
-        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
+        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/me">Learn More <ArrowRight /> </NavLink>
       </div>
 
     </motion.div>
@@ -83,7 +83,7 @@ const Resource = () => {
       <div>
         <h1 className="font-bold mb-3">Lecture Notes</h1>
         <p className="text-gray-500 ">Access deparment lecture notes and teaching materials</p>
-        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
+        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/me/courses">Learn More <ArrowRight /> </NavLink>
       </div>
 
     </motion.div>
@@ -103,7 +103,7 @@ const Resource = () => {
       <div>
         <h1 className="font-bold mb-3">Research Publications</h1>
         <p className="text-gray-500 ">Browse faculty and student research publications. </p>
-        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
+        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/research">Learn More <ArrowRight /> </NavLink>
       </div>
 
     </motion.div>
@@ -123,7 +123,7 @@ const Resource = () => {
       <div>
         <h1 className="font-bold mb-3">Learning Videos</h1>
         <p className="text-gray-500 ">Educational videos, tutorials, and recorded lectures</p>
-        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
+        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/me/learning-materials">Learn More <ArrowRight /> </NavLink>
       </div>
 
     </motion.div>
@@ -143,7 +143,7 @@ const Resource = () => {
       <div>
         <h1 className="font-bold mb-3">Student Guidelindes</h1>
         <p className="text-gray-500 "> Policies, handbooks, and guidelines for students</p>
-        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/">Learn More <ArrowRight /> </NavLink>
+        <NavLink className="flex mt-3 gap-5 items-center text-amber-500" to="/me/courses">Learn More <ArrowRight /> </NavLink>
       </div>
 
     </motion.div>

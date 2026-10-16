@@ -8,7 +8,7 @@ import {
     GraduationCap,
     BookAlert,
 } from "lucide-react";
-import departments from "../Departments/departmentData";
+
 import { motion } from "motion/react";
 import Engineering from "../Image/BG.jpg"; 
 import Footer from "../Components/Foot";

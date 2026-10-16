@@ -527,6 +527,7 @@ const UserRegister = () => {
                             </p>
 
                             <NavLink
+                                disabled={isLoading}
                                 to="/login"
                                 className="hover:bg-amber-500 transition duration-500 text-white font-bold bg-blue-950 rounded-sm w-full px-8 py-2 text-center"
                             >

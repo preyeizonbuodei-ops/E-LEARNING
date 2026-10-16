@@ -144,7 +144,13 @@ export const AdminRegister = create((set) => ({
     // =========================
     // ADMIN LOGIN
     // =========================
+    
     login: async (email, password, adminKey) => {
+        set({
+            isLoading: true,
+            error: null
+        });
+
         try {
             const response = await axios.post(
                 `${API_URL}/login`,
@@ -156,7 +162,7 @@ export const AdminRegister = create((set) => ({
             );
 
             set({
-                admin: response.data.adminr,
+                admin: response.data.admin,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null
@@ -165,22 +171,19 @@ export const AdminRegister = create((set) => ({
             return response.data;
 
         } catch (error) {
-            console.log(
-                "Zustand error:",
-                error.response?.data
-            );
-
             set({
+                admin: null,
+                isAuthenticated: false,
+                isLoading: false,
                 error:
                     error.response?.data?.message ||
-                    "Error Logging in",
-                isLoading: false,
-                isAuthenticated: false
+                    "Error Logging in"
             });
 
             throw error;
         }
     },
+
 
 
     // =========================

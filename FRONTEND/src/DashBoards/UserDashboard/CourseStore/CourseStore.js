@@ -69,6 +69,39 @@ const createCourseStore = create(() => ({
                 throw error;
             }
         },
+
+        updateCourse: async (courseId, courseData) => {
+            try {
+                const response = await axios.patch(
+                    `${API_URL}/update-course/${courseId}`,
+                    courseData
+                );
+
+                return response.data;
+            } catch (error) {
+                console.log(
+                    "UPDATE COURSE ERROR:",
+                    error.response?.data || error
+                );
+                throw error;
+            }
+        },
+
+        deleteCourse: async (courseId) => {
+            try {
+                const response = await axios.delete(
+                    `${API_URL}/delete-course/${courseId}`
+                );
+
+                return response.data;
+            } catch (error) {
+                console.log(
+                    "DELETE COURSE ERROR:",
+                    error.response?.data || error
+                );
+                throw error;
+            }
+        },
 }));
 
 export default createCourseStore;

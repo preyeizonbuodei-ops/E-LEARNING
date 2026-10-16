@@ -87,18 +87,13 @@ const Navbar = () => {
                         Contact
                     </NavLink>
 
-                    <NavLink to="/get-news" className={navStyle}>
+                    <NavLink to="/news" className={navStyle}>
                         News
                     </NavLink>
                 </div>
 
                 {/* DESKTOP ACTIONS */}
                 <div className="hidden items-center gap-3 md:flex">
-                    <input
-                        type="search"
-                        placeholder="Search..."
-                        className="w-32 rounded-lg border border-white/30 bg-white/10 px-3 py-2 outline-none placeholder:text-gray-300 lg:w-40"
-                    />
 
                     <NavLink
                         to="/register"
@@ -180,11 +175,6 @@ const Navbar = () => {
                         </NavLink>
 
                         {/* MOBILE SEARCH */}
-                        <input
-                            type="search"
-                            placeholder="Search..."
-                            className="rounded-lg border border-white/30 bg-white/10 px-3 py-2 outline-none placeholder:text-gray-300"
-                        />
 
                         {/* MOBILE PORTAL */}
                         <NavLink
