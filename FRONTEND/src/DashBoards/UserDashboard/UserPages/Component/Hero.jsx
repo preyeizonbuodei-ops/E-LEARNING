@@ -1,5 +1,5 @@
 import { Home, MapMinusIcon, Scale } from "lucide-react";
-import faculty from "../../../../Image/fb2.jpg";
+import faculty from "../../../../Image/FB2.jpg";
 import { useAuthStore } from "../../../../Store/AuthStore";
 
 const Hero = () => {
