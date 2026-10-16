@@ -47,7 +47,7 @@ router.get("/saved-material", ValidateToken, authorizedUserRoles("Student"), Get
 router.delete("/saved-material/:materialId", ValidateToken, authorizedUserRoles("Student"), DeleteSavedMaterial)
 
 // DepartmentsRoute
-router.get("/get-departments", ValidateToken, authorizedUserRoles("Student"), getDepartments);
+router.get("/get-departments", getDepartments);
 router.get("/get-departments/:departmentId", ValidateToken, authorizedUserRoles("Student"), getDepartmentById);
 router.get("/get-major-area", ValidateToken, authorizedUserRoles("Student"), getMajorAreas);
 router.get("/major-area/:majorAreaId", ValidateToken, authorizedUserRoles("Student"), getMajorAreaById);
@@ -74,7 +74,7 @@ router.get("/get-one-commnet/:id", ValidateToken, authorizedUserRoles("Student")
 router.put("/update-comment/:id", ValidateToken, authorizedUserRoles("Student"), UpdateComment);
 router.delete("/delete-comment/:id", ValidateToken, authorizedUserRoles("Student"), DeleteComment);
 
-router.get("/get-news", ValidateToken, authorizedUserRoles("Student"), ConnectNews);
+router.get("/get-news", ConnectNews);
 router.post("/send-email", ValidateToken, authorizedUserRoles("Student"), ContactFormController);
 
 module.exports = router;
