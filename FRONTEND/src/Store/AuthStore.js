@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 
-const API_URL = "http://localhost:8000/api/v1/users";
+const API_URL = "https://studstore-fullstackstudstore-backend.onrender.com/api/v1/users";
 
 axios.defaults.withCredentials = true;
 

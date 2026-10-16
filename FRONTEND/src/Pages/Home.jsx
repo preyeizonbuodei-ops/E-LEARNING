@@ -40,7 +40,7 @@ const Home = () => {
 
     const getNews = async() => {
         try {
-            const response = await axios.get('http://localhost:8000/api/v1/users/get-news');
+            const response = await axios.get('https://studstore-fullstackstudstore-backend.onrender.com/api/v1/users/get-news');
                 if(response.data.success) {
                 setNews(response.data.data.articles);
                 }

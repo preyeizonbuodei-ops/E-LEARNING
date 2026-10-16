@@ -1,8 +1,8 @@
 import axios from "axios";
 import { create } from "zustand";
 
-const API_URL = "http://localhost:8000/api/v1/admin";
-const DEPARTMENT_URL = "http://localhost:8000/api/v1/admin";
+const API_URL = "https://studstore-fullstackstudstore-backend.onrender.com/api/v1/admin";
+const DEPARTMENT_URL = "https://studstore-fullstackstudstore-backend.onrender.com/api/v1/admin";
 
 axios.defaults.withCredentials = true;
 
