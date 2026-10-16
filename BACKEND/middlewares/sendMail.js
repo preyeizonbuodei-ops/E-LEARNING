@@ -1,17 +1,14 @@
-
-const nodeMailer = require("nodemailer");
+const nodeMailer = require('nodemailer');
 
 const transport = nodeMailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
+    service: "gmail",
+    auth:{
         user: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
-        pass: process.env.NODE_CODE_SENDING_EMAIL_PASSWORD,
-    },
-});
+        pass: process.env.NODE_CODE_SENDING_EMAIL_PASSWORD
+    }
 
-console.log("sendMail.js loaded");
+
+})
 
 transport.verify((error, success) => {
     if (error) {
@@ -20,5 +17,6 @@ transport.verify((error, success) => {
         console.log("Email server is ready");
     }
 });
+
 
 module.exports = transport;
