@@ -319,11 +319,11 @@ const CreateTopicForm = () => {
     return (
         <div className="mx-auto max-w-4xl p-6">
             <h1 className="mb-2 text-2xl font-bold">
-                Create Topic
+                Create Lesson
             </h1>
 
             <p className="mb-6 text-gray-600">
-                Select a lesson, add the teaching content, and
+                Select a Topic, add the teaching content, and
                 optionally attach learning resources.
             </p>
 
@@ -334,7 +334,7 @@ const CreateTopicForm = () => {
                         htmlFor="lesson"
                         className="mb-2 block font-medium"
                     >
-                        Select Lesson
+                        Select Topic
                     </label>
 
                     <select
@@ -376,7 +376,7 @@ const CreateTopicForm = () => {
                         htmlFor="topicNumber"
                         className="mb-2 block font-medium"
                     >
-                        Topic Number
+                        Lesson Number
                     </label>
 
                     <input
@@ -397,7 +397,7 @@ const CreateTopicForm = () => {
                         htmlFor="title"
                         className="mb-2 block font-medium"
                     >
-                        Topic Title
+                        Lesson Title
                     </label>
 
                     <input

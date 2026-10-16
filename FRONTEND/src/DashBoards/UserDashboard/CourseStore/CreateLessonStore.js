@@ -15,7 +15,7 @@ const useLessonStore = create(() => ({
                 lessonData
             );
 
-            console.log("CREATE LESSON RESPONSE:", response.data);
+            
             return response.data;
         } catch (error) {
             console.log(
@@ -49,7 +49,7 @@ const useLessonStore = create(() => ({
                 `${API_URL}/courses/${courseId}/lessons`
             );
 
-            console.log("GET LESSONS BY COURSE RESPONSE:", response.data);
+            
             return response.data;
         } catch (error) {
             console.log(
@@ -68,7 +68,7 @@ const useLessonStore = create(() => ({
                 lessonData
             );
 
-            console.log("UPDATE LESSON RESPONSE:", response.data);
+            
             return response.data;
         } catch (error) {
             console.log(
@@ -86,7 +86,7 @@ const useLessonStore = create(() => ({
                 `${API_URL}/delete-lesson/${lessonId}`
             );
 
-            console.log("DELETE LESSON RESPONSE:", response.data);
+            
             return response.data;
         } catch (error) {
             console.log(

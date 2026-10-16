@@ -33,7 +33,7 @@ const createCourseStore = create(() => ({
                 }
             );
 
-            console.log("BACKEND RESPONSE:", response.data);
+            
 
             return response.data;
 
@@ -56,7 +56,7 @@ const createCourseStore = create(() => ({
                     `${API_URL}/get-courses`
                 );
 
-                console.log("ADMIN COURSES RESPONSE:", response.data);
+                
 
                 return response.data;
 

@@ -12,7 +12,7 @@ const useTopicStore = create(() => ({
                 `${API_URL}/lessons/${lessonId}/topics`
             );
 
-            console.log("GET TOPICS RESPONSE:", response.data);
+            
 
             return response.data;
         } catch (error) {

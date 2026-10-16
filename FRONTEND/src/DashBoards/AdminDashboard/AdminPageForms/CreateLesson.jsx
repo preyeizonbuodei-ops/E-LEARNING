@@ -200,11 +200,11 @@ const CreateLessonForm = () => {
                         <div>
 
                             <h1 className="text-2xl font-bold text-blue-950 sm:text-3xl">
-                                Create Lesson
+                                Create Topic
                             </h1>
 
                             <p className="mt-1 text-sm text-gray-500">
-                                Add a new lesson to an existing course.
+                                Add a new Topic to an existing course.
                             </p>
 
                         </div>
@@ -303,7 +303,7 @@ const CreateLessonForm = () => {
                             htmlFor="title"
                             className="mb-2 block text-sm font-semibold text-gray-700"
                         >
-                            Lesson Title
+                            Topic Title
                         </label>
 
                         <input
@@ -326,7 +326,7 @@ const CreateLessonForm = () => {
                             htmlFor="lessonNumber"
                             className="mb-2 block text-sm font-semibold text-gray-700"
                         >
-                            Lesson Number
+                            Topic Number
                         </label>
 
                         <input
@@ -428,7 +428,7 @@ const CreateLessonForm = () => {
                         htmlFor="content"
                         className="mb-2 block text-sm font-semibold text-gray-700"
                     >
-                        Lesson Content
+                        Topic Content
                     </label>
 
                     <div className="relative">
@@ -474,7 +474,7 @@ const CreateLessonForm = () => {
 
                             <>
                                 <Plus size={18} />
-                                Create Lesson
+                                Create Topic
                             </>
 
                         )}
