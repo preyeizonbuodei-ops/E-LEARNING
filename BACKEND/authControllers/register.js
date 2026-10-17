@@ -748,7 +748,7 @@ exports.getRefreshToken = async (req, res) => {
             httpOnly: true,
             sameSite: "Strict",
             secure: process.env.NODE_ENV === "production",
-            mmaxAge: 1 * 60 * 60 * 1000
+            maxAge: 1 * 60 * 60 * 1000
         });
 
         //  Send response
