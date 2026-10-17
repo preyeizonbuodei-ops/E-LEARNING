@@ -11,18 +11,17 @@ const Admin = require("../modules/adminSchema");
 // Consistent authentication cookie settings
 const authCookieOptions = (maxAge) => ({
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
-    maxAge
+    maxAge,
 });
 
-// Matching settings for clearing authentication cookies
 const clearAuthCookieOptions = () => ({
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/"
+    secure: true,
+    sameSite: "none",
+    path: "/",
 });
 
 exports.Register = async (req, res) => {
