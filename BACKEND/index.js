@@ -16,18 +16,16 @@ const app = express();
 app.set('trust proxy', 1);
 
 
-app.use(
-  cors({
-    origin: [
-      "https://studstore-frontend-staging.onrender.com",
-      "http://localhost:5173",
-      "http://localhost:3000"
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
-);
+app.use(cors({
+  origin: [
+    "https://studstore-frontend-staging.onrender.com",
+    "http://localhost:5173",
+    "http://localhost:3000"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+}));
 
 app.use(express.json());
 app.use(cookieparser());
