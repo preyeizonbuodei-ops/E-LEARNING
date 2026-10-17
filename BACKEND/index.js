@@ -15,8 +15,6 @@ const { GeneralRateLimiter } = require("./middlewares/RateLimit");
 const app = express();
 app.set('trust proxy', 1);
 
-// Middlewares
-const cors = require("cors");
 
 app.use(
   cors({
