@@ -158,7 +158,7 @@ exports.verifyVerificationCode = async (req, res) => {
             }
         );
 
-
+        console.log("STUDENT LOGIN: setting authorization cookie");
         res.cookie("authorization", `Bearer ${token}`, {
             httpOnly: true,
             sameSite: "none",
@@ -359,6 +359,7 @@ exports.Login = async (req, res) => {
             }
         );
 
+        console.log("STUDENT LOGIN: setting authorization cookie");
 
         res.cookie("authorization", `Bearer ${token}`, {
             httpOnly: true,
@@ -401,6 +402,7 @@ exports.Login = async (req, res) => {
         delete sentUser.password;
         delete sentUser.confirmPassword;
 
+        console.log("STUDENT LOGIN: sending successful response");
 
         return res.status(200).json({
             success: true,
