@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 
 const { ValidateAdmin } = require("../middlewares/validateAdmin");
 const Admin = require("../modules/adminSchema");
-const transport = require("../middlewares/sendMail");
+const SendMail = require("../middlewares/sendMail");
 const { hmacProcess, DoHash } = require("../utils/hashing");
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -148,8 +148,8 @@ exports.AdminRegister = async (req, res) => {
             verificationTokenExpiresAt
         });
 
-        const mailInfo = await transport.sendMail({
-            from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+        const mailInfo = await sendMail({
+            from: process.env.EMAIL_FROM,
             to: normalizedEmail,
             subject: "StudStore Admin Email Verification",
             text: `Your StudStore admin verification code is: ${verificationCode}. It expires in 24 hours.`,
@@ -244,8 +244,8 @@ exports.adminVerifyVerificationCode = async (req, res) => {
 
         const adminPasskey = crypto.randomBytes(12).toString("hex");
 
-        const mailInfo = await transport.sendMail({
-            from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+        const mailInfo = await SendMail({
+            from: process.env.EMAIL_FROM,
             to: normalizedEmail,
             subject: "StudStore Admin Passkey",
             text: `Your admin passkey is: ${adminPasskey}. Keep it secure and never share it.`,

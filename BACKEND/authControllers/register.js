@@ -4,7 +4,7 @@ const { ValidateUser, ValidateChangePassword } = require("../middlewares/validat
 const bcrypt = require("bcrypt");
 const { DoHash } = require("../utils/hashing");
 const jwt = require("jsonwebtoken");
-const transport = require("../middlewares/sendMail")
+const SendMail = require("../middlewares/sendMail")
 const { hmacProcess }  = require('../utils/hashing'); 
 const Admin = require("../modules/adminSchema");
 
@@ -61,8 +61,8 @@ exports.Register = async (req, res) => {
     
 
 
-            const info = await transport.sendMail({
-                from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+            const info = await SendMail({
+                from: process.env.EMAIL_FROM,
                 to: newUser.email,
                 subject: "StudStore Account Verification Code",
                 text: `Your Verification Code is: ${verificationToken}. Keep it secure and never share it.`,
@@ -202,8 +202,8 @@ exports.verifyVerificationCode = async (req, res) => {
         delete user.verificationTokenExpiresAt;
 
             
-        await transport.sendMail({
-            from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+        await SendMail({
+            from: process.env.EMAIL_FROM,
             to: existingUser.email,
             subject: "Welcome to StudStore — Learn. Explore. Innovate!",
             text: `Welcome to StudStore, ${existingUser.username}! We're excited to have you join our growing community of learners, innovators, and future engineers. Thank you for choosing StudStore. Empowering learning. Inspiring innovation.`,
