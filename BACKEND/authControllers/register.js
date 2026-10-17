@@ -61,33 +61,34 @@ exports.Register = async (req, res) => {
     
 
 
-            const info = await SendMail({
-                from: process.env.EMAIL_FROM,
-                to: newUser.email,
-                subject: "StudStore Account Verification Code",
-                text: `Your Verification Code is: ${verificationToken}. Keep it secure and never share it.`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; padding: 24px;">
-                        <h2>StudStore Account Verification Code</h2>
-                        <p>Keep this key secure and never share it with anyone.</p>
-                        <div style="padding: 16px; background: #f1f5f9; font-size: 20px; font-weight: bold; word-break: break-all;">
-                            ${verificationToken}
-                        </div>
-                        <p>Thanks For Chosing StudStore.</p>
+            // Send the email
+        await SendMail({
+            to: newUser.email,
+            subject: "StudStore Account Verification Code",
+            text: `Your Verification Code is: ${verificationToken}. Keep it secure and never share it.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 24px;">
+                    <h2>StudStore Account Verification Code</h2>
+                    <p>Keep this key secure and never share it with anyone.</p>
+                    <div style="padding: 16px; background: #f1f5f9; font-size: 20px; font-weight: bold; word-break: break-all;">
+                        ${verificationToken}
                     </div>
-                `
-            });
+                    <p>Thanks For Choosing StudStore.</p>
+                </div>
+            `
+        });
 
-            if(info.accepted[0] === newUser.email) {
-                const hashedCodeValue = hmacProcess(verificationToken, process.env.HMAC_VERIFICATION_CODE_SECRET);
-                newUser.verificationToken = hashedCodeValue;
+        // Hash the verification token before saving
+        const hashedCodeValue = hmacProcess(verificationToken, process.env.HMAC_VERIFICATION_CODE_SECRET);
+        newUser.verificationToken = hashedCodeValue;
 
-            
-            }
-            await newUser.save() 
-            
-            res.status(201).json({ success: true, message: `Succesful` })
-            
+        await newUser.save();
+
+        res.status(201).json({ 
+            success: true, 
+            message: "Registration successful. Please check your email for the verification code." 
+        });
+                    
     
     } catch (error) {
         console.log(error);
