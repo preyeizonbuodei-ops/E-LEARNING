@@ -4,64 +4,100 @@ const { ValidateUser, ValidateChangePassword } = require("../middlewares/validat
 const bcrypt = require("bcrypt");
 const { DoHash } = require("../utils/hashing");
 const jwt = require("jsonwebtoken");
-const SendMail = require("../middlewares/sendMail")
-const { hmacProcess }  = require('../utils/hashing'); 
+const SendMail = require("../middlewares/sendMail");
+const { hmacProcess } = require("../utils/hashing");
 const Admin = require("../modules/adminSchema");
+
+// Consistent authentication cookie settings
+const authCookieOptions = (maxAge) => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+    maxAge
+});
+
+// Matching settings for clearing authentication cookies
+const clearAuthCookieOptions = () => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/"
+});
 
 exports.Register = async (req, res) => {
     try {
-        // takes the user inputs
         console.log(req.body);
-        const { username, email, password, confirmPassword, matricNumber, level, department, role, lastLogin, isLoggedIn } = req.body;
 
-        // checks if the user inputs are correct
-        const  { error } = ValidateUser.validate( {username, email, password, confirmPassword, matricNumber, level, department } );
+        const {
+            username,
+            email,
+            password,
+            confirmPassword,
+            matricNumber,
+            level,
+            department,
+            role,
+            lastLogin,
+            isLoggedIn
+        } = req.body;
 
-        if(error) {
-            return res.status(400).json({ success: false, message: error.details[0].message })
+        const { error } = ValidateUser.validate({
+            username,
+            email,
+            password,
+            confirmPassword,
+            matricNumber,
+            level,
+            department
+        });
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: error.details[0].message
+            });
         }
-        
-        // checks if the passwords match
-        if(confirmPassword !== password) {
-            return res.status(400).json({ success: false, message: "password din't match" });
+
+        if (confirmPassword !== password) {
+            return res.status(400).json({
+                success: false,
+                message: "password din't match"
+            });
         }
 
-
-        // checks if the there is an already exsiting user with the same email
         const check = await User.findOne({ email });
 
         if (check) {
             return res.status(409).json({
-            success: false,
-            message: "email already exists. Try another email."
-        });
-        
-    }
-        // hashing the password to be stored on the database
+                success: false,
+                message: "email already exists. Try another email."
+            });
+        }
+
         const hashedPassword = await DoHash(password, 10);
 
-            const verificationToken  = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationToken = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
 
-            const verificationTokenExpiresAt = Date.now() + 24 * 60 *60 *1000;
+        const verificationTokenExpiresAt =
+            Date.now() + 24 * 60 * 60 * 1000;
 
-        // gives the payload to be saved on the database
-        const newUser = new User({ 
-            username, 
-            email, 
+        const newUser = new User({
+            username,
+            email,
             password: hashedPassword,
-            level, 
-            department, 
-            matricNumber, 
-            role, 
+            level,
+            department,
+            matricNumber,
+            role,
             isLoggedIn,
             lastLogin,
             verificationToken,
             verificationTokenExpiresAt
-        })     
-    
+        });
 
-
-            // Send the email
         await SendMail({
             to: newUser.email,
             subject: "StudStore Account Verification Code",
@@ -78,28 +114,32 @@ exports.Register = async (req, res) => {
             `
         });
 
-        // Hash the verification token before saving
-        const hashedCodeValue = hmacProcess(verificationToken, process.env.HMAC_VERIFICATION_CODE_SECRET);
+        const hashedCodeValue = hmacProcess(
+            verificationToken,
+            process.env.HMAC_VERIFICATION_CODE_SECRET
+        );
+
         newUser.verificationToken = hashedCodeValue;
 
         await newUser.save();
 
-        res.status(201).json({ 
-            success: true, 
-            message: "Registration successful. Please check your email for the verification code." 
+        return res.status(201).json({
+            success: true,
+            message: "Registration successful. Please check your email for the verification code."
         });
-                    
-    
-    } catch (error) {
-        console.log(error);
-    
 
+    } catch (error) {
+        console.error("REGISTRATION ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Registration failed"
+        });
     }
-}
+};
 
 exports.verifyVerificationCode = async (req, res) => {
     try {
-
         const { email, verificationCode } = req.body;
 
         const existingUser = await User.findOne({ email });
@@ -137,20 +177,17 @@ exports.verifyVerificationCode = async (req, res) => {
             });
         }
 
-        // User is now verified and automatically logged in
         existingUser.isVerified = true;
         existingUser.isLoggedIn = true;
         existingUser.verificationToken = undefined;
         existingUser.verificationTokenExpiresAt = undefined;
 
-
- 
-
         const token = jwt.sign(
             {
                 id: existingUser._id,
                 role: existingUser.role,
-                email: existingUser.email
+                email: existingUser.email,
+                isVerified: true
             },
             process.env.JWT_SECRET,
             {
@@ -158,16 +195,11 @@ exports.verifyVerificationCode = async (req, res) => {
             }
         );
 
-        console.log("STUDENT LOGIN: setting authorization cookie");
-        res.cookie("authorization", `Bearer ${token}`, {
-            httpOnly: true,
-            sameSite: "none",
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 1 * 60 * 60 * 1000
-        });
-
-
-
+        res.cookie(
+            "authorization",
+            `Bearer ${token}`,
+            authCookieOptions(60 * 60 * 1000)
+        );
 
         const refreshToken = jwt.sign(
             {
@@ -181,20 +213,14 @@ exports.verifyVerificationCode = async (req, res) => {
             }
         );
 
-
-        
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            sameSite: "strict",
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 4 * 24 * 60 * 60 * 1000
-        });
-
+        res.cookie(
+            "refreshToken",
+            refreshToken,
+            authCookieOptions(4 * 24 * 60 * 60 * 1000)
+        );
 
         await existingUser.save();
 
-
-        // Prepare user response
         const user = existingUser.toObject();
 
         delete user.password;
@@ -202,7 +228,6 @@ exports.verifyVerificationCode = async (req, res) => {
         delete user.verificationToken;
         delete user.verificationTokenExpiresAt;
 
-            
         await SendMail({
             from: process.env.EMAIL_FROM,
             to: existingUser.email,
@@ -210,7 +235,6 @@ exports.verifyVerificationCode = async (req, res) => {
             text: `Welcome to StudStore, ${existingUser.username}! We're excited to have you join our growing community of learners, innovators, and future engineers. Thank you for choosing StudStore. Empowering learning. Inspiring innovation.`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 24px; color: #1e293b; line-height: 1.7;">
-
                     <h2 style="color: #2563eb; text-align: center;">
                         Welcome to StudStore — Your Journey to Learning and Innovation Starts Here!
                     </h2>
@@ -238,10 +262,10 @@ exports.verifyVerificationCode = async (req, res) => {
                     <h3>💡 Expand Your Knowledge</h3>
                     <p>Discover learning materials, educational videos, and useful resources.</p>
 
-                    <h3> Explore Engineering Research</h3>
+                    <h3>Explore Engineering Research</h3>
                     <p>Discover research papers, academic publications, and ideas that inspire innovation.</p>
 
-                    <h3> Grow and Innovate</h3>
+                    <h3>Grow and Innovate</h3>
                     <p>Build your knowledge, strengthen your skills, and take steps toward your future goals.</p>
 
                     <p>
@@ -272,7 +296,6 @@ exports.verifyVerificationCode = async (req, res) => {
                     </h2>
 
                     <p>Warm regards,</p>
-
                     <h2>The StudStore Team</h2>
 
                     <p style="color: #64748b;">
@@ -284,40 +307,30 @@ exports.verifyVerificationCode = async (req, res) => {
                     <p style="font-size: 12px; color: #64748b; text-align: center;">
                         Thank you for choosing StudStore.
                     </p>
-
                 </div>
             `
         });
 
-
         return res.status(200).json({
             success: true,
-            user: user,
+            user,
             message: "Logged in successfully"
         });
 
     } catch (error) {
-
-        console.log(error);
+        console.error("VERIFICATION ERROR:", error);
 
         return res.status(500).json({
             success: false,
-            message: "Something went wrong",
-            error: error.message
+            message: "Something went wrong"
         });
     }
 };
 
-
-
 exports.Login = async (req, res) => {
     try {
-
-        // Takes the required input fields for login
         const { email, password } = req.body;
 
-
-        // Find user using email
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -327,8 +340,6 @@ exports.Login = async (req, res) => {
             });
         }
 
-
-        // Compare passwords
         const compare = await bcrypt.compare(password, user.password);
 
         if (!compare) {
@@ -338,14 +349,13 @@ exports.Login = async (req, res) => {
             });
         }
 
-
-        // User must verify account before login
         if (!user.isVerified) {
             return res.status(409).json({
                 success: false,
                 message: "Please verify your account before login"
             });
         }
+
         const token = jwt.sign(
             {
                 id: user._id,
@@ -359,15 +369,11 @@ exports.Login = async (req, res) => {
             }
         );
 
-        console.log("STUDENT LOGIN: setting authorization cookie");
-
-        res.cookie("authorization", `Bearer ${token}`, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "none",
-            maxAge: 1 * 60 * 60 * 1000
-        });
-
+        res.cookie(
+            "authorization",
+            `Bearer ${token}`,
+            authCookieOptions(60 * 60 * 1000)
+        );
 
         const refreshToken = jwt.sign(
             {
@@ -381,28 +387,21 @@ exports.Login = async (req, res) => {
             }
         );
 
+        res.cookie(
+            "refreshToken",
+            refreshToken,
+            authCookieOptions(4 * 24 * 60 * 60 * 1000)
+        );
 
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "none",
-            maxAge: 4 * 24 * 60 * 60 * 1000
-        });
-
-
-        // Update login status
         user.isLoggedIn = true;
+        user.lastLogin = new Date();
 
         await user.save();
 
-
-        // Prepare user response
         const sentUser = user.toObject();
 
         delete sentUser.password;
         delete sentUser.confirmPassword;
-
-        console.log("STUDENT LOGIN: sending successful response");
 
         return res.status(200).json({
             success: true,
@@ -411,8 +410,7 @@ exports.Login = async (req, res) => {
         });
 
     } catch (error) {
-
-        console.log(error);
+        console.error("LOGIN ERROR:", error);
 
         return res.status(500).json({
             success: false,
@@ -421,11 +419,8 @@ exports.Login = async (req, res) => {
     }
 };
 
-
-
 exports.Logout = async (req, res) => {
     try {
-
         const userId = req.user.id;
 
         const existingUser = await User.findById(userId);
@@ -437,28 +432,12 @@ exports.Logout = async (req, res) => {
             });
         }
 
-
-        // Update login status
         existingUser.isLoggedIn = false;
 
         await existingUser.save();
 
-
-        // Clear access token
-        res.clearCookie("authorization", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict"
-        });
-
-
-        // Clear refresh token
-        res.clearCookie("refreshToken", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict"
-        });
-
+        res.clearCookie("authorization", clearAuthCookieOptions());
+        res.clearCookie("refreshToken", clearAuthCookieOptions());
 
         return res.status(200).json({
             success: true,
@@ -466,8 +445,7 @@ exports.Logout = async (req, res) => {
         });
 
     } catch (error) {
-
-        console.log(error);
+        console.error("LOGOUT ERROR:", error);
 
         return res.status(500).json({
             success: false,
@@ -476,15 +454,15 @@ exports.Logout = async (req, res) => {
     }
 };
 
-
-exports.ChangePassword = async( req, res ) => {
+exports.ChangePassword = async (req, res) => {
     try {
-
-       
         const userId = req.user.id;
         const { oldPassword, newPassword } = req.body;
 
-        const checking =  ValidateChangePassword.validate( { oldPassword, newPassword });
+        const checking = ValidateChangePassword.validate({
+            oldPassword,
+            newPassword
+        });
 
         if (checking.error) {
             return res.status(400).json({
@@ -492,107 +470,151 @@ exports.ChangePassword = async( req, res ) => {
                 message: checking.error.details[0].message
             });
         }
-        
-        const existingUser = await User.findById(userId).select(" +password ");
 
-        if(!existingUser) {
-            return res.status(404). json({ success: false, message: "No user was found" })
-        };
+        const existingUser = await User.findById(userId).select("+password");
 
-        if(!existingUser.isVerified){
-            return res.status(403).json({ success: false, message: "You are not a verified user" })
-        };
-
-        
-        const result = await bcrypt.compare(oldPassword, existingUser.password)
-        if(!result){
-            return res.status(401).json({ success: false, message: "invalid credentials" })
+        if (!existingUser) {
+            return res.status(404).json({
+                success: false,
+                message: "No user was found"
+            });
         }
-        
+
+        if (!existingUser.isVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not a verified user"
+            });
+        }
+
+        const result = await bcrypt.compare(
+            oldPassword,
+            existingUser.password
+        );
+
+        if (!result) {
+            return res.status(401).json({
+                success: false,
+                message: "invalid credentials"
+            });
+        }
+
         const hashedPassword = await DoHash(newPassword, 12);
+
         existingUser.password = hashedPassword;
+
         await existingUser.save();
-        res.status(200).json({ success: true, message: "Password updated successfuly" });
 
-
-         
+        return res.status(200).json({
+            success: true,
+            message: "Password updated successfuly"
+        });
 
     } catch (error) {
-        console.log(error)
+        console.error("CHANGE PASSWORD ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong"
+        });
     }
-}
+};
 
-exports.ForgotPasswordEmail = async( req, res ) => {
-
+exports.ForgotPasswordEmail = async (req, res) => {
     try {
-        
-        const { email }= req.body;
+        const { email } = req.body;
 
         const existingUser = await User.findOne({ email });
 
-        if(!existingUser){
-            return res.status(404).json({ success: false, message: `No User found with this email` })
-        };
+        if (!existingUser) {
+            return res.status(404).json({
+                success: false,
+                message: "No User found with this email"
+            });
+        }
 
-        if(!existingUser.isVerified){
-            return res.status(403).json({ success: false, message: "You are not a verifeid user" });
-        };
+        if (!existingUser.isVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not a verifeid user"
+            });
+        }
 
-        const forgotPasswordCode  = Math.floor(100000 + Math.random() * 900000).toString();
+        const forgotPasswordCode = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
 
-        const forgotPasswordCodeExpiresAt = Date.now() + 24 * 60 *60 *1000;
+        const forgotPasswordCodeExpiresAt =
+            Date.now() + 24 * 60 * 60 * 1000;
 
-        //send the email
         const sendingMail = await transport.sendMail({
             from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
             to: existingUser.email,
             subject: "Forgot Passord Code",
             html: "<h1>" + forgotPasswordCode + "</h1>"
-        })
+        });
 
-        if(sendingMail.accepted[0] === existingUser.email) {
-            const hashedValue = hmacProcess(forgotPasswordCode, process.env.HMAC_VERIFICATION_CODE_SECRET);
-            
+        if (sendingMail.accepted[0] === existingUser.email) {
+            const hashedValue = hmacProcess(
+                forgotPasswordCode,
+                process.env.HMAC_VERIFICATION_CODE_SECRET
+            );
+
             existingUser.forgotPasswordCode = hashedValue;
-            existingUser.forgotPasswordCodeExpiresAt = forgotPasswordCodeExpiresAt;
+            existingUser.forgotPasswordCodeExpiresAt =
+                forgotPasswordCodeExpiresAt;
 
-            const verificationToken = jwt.sign({
-                user_Id: existingUser._id,
-                purpose: "forget-password-user"
-            }, process.env.JWT_SECRET , {
-                expiresIn: "1h"
-            })
+            const verificationToken = jwt.sign(
+                {
+                    user_Id: existingUser._id,
+                    purpose: "forget-password-user"
+                },
+                process.env.JWT_SECRET,
+                {
+                    expiresIn: "1h"
+                }
+            );
 
-            res.cookie("forget-password-user", verificationToken, {
-                httpOnly: true,
-                sameSite: "strict",
-                secure: process.env.NODE_ENV === "production",
-                maxAge: 1 * 60 * 60 * 1000 
-            })
+            res.cookie(
+                "forget-password-user",
+                verificationToken,
+                authCookieOptions(60 * 60 * 1000)
+            );
 
             await existingUser.save();
-            res.status(200).json({ success: true, message: "Check Email For Reset Password" })
+
+            return res.status(200).json({
+                success: true,
+                message: "Check Email For Reset Password"
+            });
         }
-       
-    
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to send the reset password code"
+        });
+
     } catch (error) {
-       console.log(error); 
-       return res.status(500).json({ success: false, message: "Something went wrong while sending the reset password code"})
+        console.error("FORGOT PASSWORD ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong while sending the reset password code"
+        });
     }
+};
 
-}
-
-exports.VerifyForgotPasswordCode = async( req, res ) => {
-
+exports.VerifyForgotPasswordCode = async (req, res) => {
     try {
-         
         const { providedCodeValue } = req.body;
 
-    
         const verificationToken = req.cookies["forget-password-user"];
 
-        if(!verificationToken) {
-            return res.status(401).json({ success: false, message: "Token Expired" })
+        if (!verificationToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Token Expired"
+            });
         }
 
         const decoded = jwt.verify(
@@ -602,21 +624,27 @@ exports.VerifyForgotPasswordCode = async( req, res ) => {
 
         if (decoded.purpose !== "forget-password-user") {
             return res.status(403).json({
-            success: false,
-            message: "Invalid verification session"
-        });
-    }
-        const existingUser = await User.findById(decoded.user_Id);
-       
-        if(!existingUser){
-            return res.status(404).json({ success: false, message: `User not found with this email` })
-        };
+                success: false,
+                message: "Invalid verification session"
+            });
+        }
 
-        if(!existingUser.isVerified){
-            return res.status(403).json({ success: false, message: "You are not a verified User" })
-        };
-        
-        
+        const existingUser = await User.findById(decoded.user_Id);
+
+        if (!existingUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found with this email"
+            });
+        }
+
+        if (!existingUser.isVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not a verified User"
+            });
+        }
+
         const hashedCodeValue = hmacProcess(
             String(providedCodeValue).trim(),
             process.env.HMAC_VERIFICATION_CODE_SECRET
@@ -629,45 +657,59 @@ exports.VerifyForgotPasswordCode = async( req, res ) => {
             });
         }
 
-        if(Date.now() > existingUser.forgotPasswordCodeExpiresAt){
-            return res.status(400).json({ success: false, message: "Expirerd code" })
-        };
-
-        const resetToken = jwt.sign({
-            id: existingUser._id,
-            purpose: "reset-password"
-        }, process.env.JWT_SECRET, 
-        {
-            expiresIn: '1h'
-        })
-
-        res.cookie("reset-password", resetToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 1 * 60 * 60 * 1000 
-        })
-
-        await existingUser.save();
-        res.status(200).json({ success: true, message: `Verification Successful` })
-
-    } catch (error) {
-        console.log(error)
-    }
-
-}
-
-exports.ResetPassword = async( req, res ) => {
-    try {
-        const { password, confirmPassword } = req.body
-        const resetToken = req.cookies["reset-password"];
-
-        if(!resetToken) {
-            return res.status(401).json({ sccess: false, message: "Token Season Expired" })
+        if (Date.now() > existingUser.forgotPasswordCodeExpiresAt) {
+            return res.status(400).json({
+                success: false,
+                message: "Expirerd code"
+            });
         }
 
-        
-        
+        const resetToken = jwt.sign(
+            {
+                id: existingUser._id,
+                purpose: "reset-password"
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1h"
+            }
+        );
+
+        res.cookie(
+            "reset-password",
+            resetToken,
+            authCookieOptions(60 * 60 * 1000)
+        );
+
+        await existingUser.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Verification Successful"
+        });
+
+    } catch (error) {
+        console.error("VERIFY FORGOT PASSWORD ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong"
+        });
+    }
+};
+
+exports.ResetPassword = async (req, res) => {
+    try {
+        const { password, confirmPassword } = req.body;
+        const resetToken = req.cookies["reset-password"];
+
+        if (!resetToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Token Session Expired"
+            });
+        }
+
         const decoded = jwt.verify(
             resetToken,
             process.env.JWT_SECRET
@@ -675,46 +717,56 @@ exports.ResetPassword = async( req, res ) => {
 
         const existingUser = await User.findById(decoded.id);
 
-        if(!existingUser) {
-            return res.status(404).json({ success: false, message: "User not found with this email" })
+        if (!existingUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found with this email"
+            });
         }
 
-        if(decoded.purpose !== "reset-password") {
+        if (decoded.purpose !== "reset-password") {
             return res.status(403).json({
                 success: false,
                 message: "Invalid reset token"
             });
         }
 
-        if(password !== confirmPassword) {
-            return res.status(409).json({ success: false, message: "Password don't match" })
+        if (password !== confirmPassword) {
+            return res.status(409).json({
+                success: false,
+                message: "Password don't match"
+            });
         }
 
-        const hashePassword = await DoHash(password, 10);
+        const hashedPassword = await DoHash(password, 10);
 
+        existingUser.password = hashedPassword;
 
-        existingUser.password = hashePassword;
         await existingUser.save();
 
-        res.clearCookie("password-reset",{
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict"
+        res.clearCookie(
+            "reset-password",
+            clearAuthCookieOptions()
+        );
 
-            
-        })
-        res.status(200).json({ success: true, message: "Password updated successfully" })
+        return res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
+        });
+
     } catch (error) {
-        console.log(error)
+        console.error("RESET PASSWORD ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong"
+        });
     }
-}
+};
 
 exports.getRefreshToken = async (req, res) => {
     try {
-         
-        //  Get refresh token from cookie
-        const { refreshToken } = req.cookies;
-
+        const { refreshToken } = req.cookies || {};
 
         if (!refreshToken) {
             return res.status(401).json({
@@ -723,19 +775,33 @@ exports.getRefreshToken = async (req, res) => {
             });
         }
 
-        //  Verify refresh token
         const decodedUser = jwt.verify(
             refreshToken,
             process.env.JWT_SECRET
         );
-        console.log("DECODED USER:", decodedUser);
 
-        // Create a new access token
+        if (!decodedUser.id) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid refresh token payload"
+            });
+        }
+
+        const user = await User.findById(decodedUser.id);
+
+        if (!user || !user.isVerified) {
+            return res.status(401).json({
+                success: false,
+                message: "User not found or account not verified"
+            });
+        }
+
         const newAccessToken = jwt.sign(
             {
-                id: decodedUser.id,
-                role: decodedUser.role,
-                email: decodedUser.email
+                id: user._id,
+                role: user.role,
+                email: user.email,
+                isVerified: user.isVerified
             },
             process.env.JWT_SECRET,
             {
@@ -743,171 +809,171 @@ exports.getRefreshToken = async (req, res) => {
             }
         );
 
-        //  Store the new access token in the authorization cookie
-        res.cookie("authorization", `Bearer ${newAccessToken}`, {
-            httpOnly: true,
-            sameSite: "Strict",
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 1 * 60 * 60 * 1000
-        });
+        res.cookie(
+            "authorization",
+            `Bearer ${newAccessToken}`,
+            authCookieOptions(60 * 60 * 1000)
+        );
 
-        //  Send response
         return res.status(200).json({
             success: true,
             message: "Access token refreshed successfully"
         });
 
     } catch (error) {
-
-        console.log(error);
+        console.error("REFRESH TOKEN ERROR:", error.message);
 
         return res.status(401).json({
             success: false,
-            message: "Invalid or expired refresh token"
+            message: error.name === "TokenExpiredError"
+                ? "Refresh token expired. Please log in again."
+                : "Invalid refresh token"
         });
     }
 };
 
 exports.getAllUsers = async (req, res) => {
-  try {
-    const [students, admins] = await Promise.all([
-      User.find()
-        .select(
-          "username email level department matricNumber role isVerified isLoggedIn lastLogin createdAt updatedAt"
-        )
-        .lean(),
+    try {
+        const [students, admins] = await Promise.all([
+            User.find()
+                .select(
+                    "username email level department matricNumber role isVerified isLoggedIn lastLogin createdAt updatedAt"
+                )
+                .lean(),
 
-      Admin.find()
-        .select(
-          "username email role isVerified isLoggedIn lastLoggedIn createdAt updatedAt"
-        )
-        .lean(),
-    ]);
+            Admin.find()
+                .select(
+                    "username email role isVerified isLoggedIn lastLoggedIn createdAt updatedAt"
+                )
+                .lean()
+        ]);
 
-    // Identify each account type
-    const formattedStudents = students.map((student) => ({
-      ...student,
-      accountType: "Student",
-      lastLogin: student.lastLogin,
-    }));
+        const formattedStudents = students.map((student) => ({
+            ...student,
+            accountType: "Student",
+            lastLogin: student.lastLogin
+        }));
 
-    const formattedAdmins = admins.map((admin) => ({
-      ...admin,
-      accountType: "Admin",
-      lastLogin: admin.lastLoggedIn,
-    }));
+        const formattedAdmins = admins.map((admin) => ({
+            ...admin,
+            accountType: "Admin",
+            lastLogin: admin.lastLoggedIn
+        }));
 
-    // Combine both account types and sort by registration date
-    const allUsers = [...formattedStudents, ...formattedAdmins].sort(
-      (a, b) =>
-        new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-    );
+        const allUsers = [...formattedStudents, ...formattedAdmins].sort(
+            (a, b) =>
+                new Date(b.createdAt || 0) -
+                new Date(a.createdAt || 0)
+        );
 
-    return res.status(200).json({
-      success: true,
-      totalUsers: allUsers.length,
-      totalStudents: students.length,
-      totalAdmins: admins.length,
-      users: allUsers,
-    });
-  } catch (error) {
-    console.error("GET ALL USERS ERROR:", error);
+        return res.status(200).json({
+            success: true,
+            totalUsers: allUsers.length,
+            totalStudents: students.length,
+            totalAdmins: admins.length,
+            users: allUsers
+        });
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve users",
-    });
-  }
+    } catch (error) {
+        console.error("GET ALL USERS ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to retrieve users"
+        });
+    }
 };
 
-// Update a user
 exports.updateUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const {
-      username,
-      email,
-      level,
-      department,
-      matricNumber,
-    } = req.body;
+    try {
+        const { userId } = req.params;
 
-    const updates = {};
+        const {
+            username,
+            email,
+            level,
+            department,
+            matricNumber
+        } = req.body;
 
-    if (username !== undefined) updates.username = username;
-    if (email !== undefined) updates.email = email;
-    if (level !== undefined) updates.level = level;
-    if (department !== undefined) updates.department = department;
-    if (matricNumber !== undefined) {
-      updates.matricNumber = matricNumber;
+        const updates = {};
+
+        if (username !== undefined) updates.username = username;
+        if (email !== undefined) updates.email = email;
+        if (level !== undefined) updates.level = level;
+        if (department !== undefined) updates.department = department;
+
+        if (matricNumber !== undefined) {
+            updates.matricNumber = matricNumber;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No valid fields provided for update"
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { $set: updates },
+            {
+                new: true,
+                runValidators: true
+            }
+        ).select(
+            "username email level department matricNumber role isVerified isLoggedIn lastLogin createdAt updatedAt"
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "User updated successfully",
+            user
+        });
+
+    } catch (error) {
+        console.error("UPDATE USER ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to update user"
+        });
     }
-
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "No valid fields provided for update",
-      });
-    }
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: updates },
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).select(
-      "username email level department matricNumber role isVerified isLoggedIn lastLogin createdAt updatedAt"
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "User updated successfully",
-      user,
-    });
-  } catch (error) {
-    console.error("UPDATE USER ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update user",
-    });
-  }
 };
 
-// Delete a user
 exports.deleteUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
+    try {
+        const { userId } = req.params;
 
-    const user = await User.findById(userId);
+        const user = await User.findById(userId);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        await User.findByIdAndDelete(userId);
+
+        return res.status(200).json({
+            success: true,
+            message: "User deleted successfully"
+        });
+
+    } catch (error) {
+        console.error("DELETE USER ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to delete user"
+        });
     }
-
-    await User.findByIdAndDelete(userId);
-
-    return res.status(200).json({
-      success: true,
-      message: "User deleted successfully",
-    });
-  } catch (error) {
-    console.error("DELETE USER ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete user",
-    });
-  }
 };
