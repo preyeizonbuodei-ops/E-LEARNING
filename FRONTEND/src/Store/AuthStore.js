@@ -3,7 +3,10 @@ import axios from "axios";
 
 const API_URL = "https://studstore-fullstackstudstore-backend.onrender.com/api/v1/users";
 
-axios.defaults.withCredentials = true;
+const API = axios.create({
+    baseURL: API_URL,
+    withCredentials: true,
+});
 
 export const useAuthStore = create((set) => ({
     user: null,
