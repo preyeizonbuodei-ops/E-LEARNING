@@ -161,7 +161,7 @@ exports.verifyVerificationCode = async (req, res) => {
 
         res.cookie("authorization", `Bearer ${token}`, {
             httpOnly: true,
-            sameSite: "strict",
+            sameSite: "none",
             secure: process.env.NODE_ENV === "production",
             maxAge: 1 * 60 * 60 * 1000
         });
@@ -363,7 +363,7 @@ exports.Login = async (req, res) => {
         res.cookie("authorization", `Bearer ${token}`, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "none",
             maxAge: 1 * 60 * 60 * 1000
         });
 
@@ -384,7 +384,7 @@ exports.Login = async (req, res) => {
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "none",
             maxAge: 4 * 24 * 60 * 60 * 1000
         });
 
