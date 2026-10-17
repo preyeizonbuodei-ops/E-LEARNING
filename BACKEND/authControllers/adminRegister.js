@@ -1,3 +1,4 @@
+
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
@@ -9,18 +10,37 @@ const { hmacProcess, DoHash } = require("../utils/hashing");
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const adminCookieOptions = {
+// AUTH COOKIE OPTIONS
+const authCookieOptions = (maxAge) => ({
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? "none" : "strict",
-    path: "/"
-};
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+    maxAge,
+});
 
+// COOKIE CLEARING OPTIONS
+const clearAuthCookieOptions = () => ({
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+});
+
+// CLEAR BOTH ADMIN AUTH COOKIES
 const clearAdminCookies = (res) => {
-    res.clearCookie("adminAuthorization", adminCookieOptions);
-    res.clearCookie("adminRefreshToken", adminCookieOptions);
+    res.clearCookie(
+        "adminAuthorization",
+        clearAuthCookieOptions()
+    );
+
+    res.clearCookie(
+        "adminRefreshToken",
+        clearAuthCookieOptions()
+    );
 };
 
+// SAFE ADMIN RESPONSE
 const getSafeAdmin = (admin) => ({
     id: admin._id.toString(),
     username: admin.username,
@@ -31,6 +51,7 @@ const getSafeAdmin = (admin) => ({
     lastLoggedIn: admin.lastLoggedIn
 });
 
+// VERIFY EMAIL DELIVERY
 const isEmailAccepted = (mailInfo, email) => {
     return mailInfo?.accepted?.some(
         (address) =>
@@ -38,6 +59,7 @@ const isEmailAccepted = (mailInfo, email) => {
     );
 };
 
+// CENTRAL ERROR HANDLER
 const sendControllerError = (res, error, label) => {
     console.error(`${label}:`, error);
 
@@ -54,11 +76,14 @@ const sendControllerError = (res, error, label) => {
     });
 };
 
+// VERIFICATION SECRET
 const getVerificationSecret = () => {
     const secret = process.env.HMAC_VERIFICATION_CODE_SECRET;
 
     if (!secret) {
-        throw new Error("HMAC_VERIFICATION_CODE_SECRET is not configured");
+        throw new Error(
+            "HMAC_VERIFICATION_CODE_SECRET is not configured"
+        );
     }
 
     return secret;
@@ -107,7 +132,13 @@ exports.AdminRegister = async (req, res) => {
         }
 
         if (!process.env.NODE_CODE_SENDING_EMAIL_ADDRESS) {
-            throw new Error("Admin verification email address is not configured");
+            throw new Error(
+                "Admin verification email address is not configured"
+            );
+        }
+
+        if (!process.env.EMAIL_FROM) {
+            throw new Error("EMAIL_FROM is not configured");
         }
 
         const normalizedEmail = email.trim().toLowerCase();
@@ -148,7 +179,7 @@ exports.AdminRegister = async (req, res) => {
             verificationTokenExpiresAt
         });
 
-        const mailInfo = await sendMail({
+        await SendMail({
             from: process.env.EMAIL_FROM,
             to: normalizedEmail,
             subject: "StudStore Admin Email Verification",
@@ -164,7 +195,7 @@ exports.AdminRegister = async (req, res) => {
             `
         });
 
-        if (!isEmailAccepted(mailInfo, normalizedEmail)) {
+        if (!SendMail) {
             return res.status(502).json({
                 success: false,
                 message: "Verification email could not be delivered. Please try again."
@@ -179,7 +210,11 @@ exports.AdminRegister = async (req, res) => {
             message: "Registration successful. Check your email for the verification code."
         });
     } catch (error) {
-        return sendControllerError(res, error, "ADMIN REGISTRATION ERROR");
+        return sendControllerError(
+            res,
+            error,
+            "ADMIN REGISTRATION ERROR"
+        );
     }
 };
 
@@ -244,7 +279,7 @@ exports.adminVerifyVerificationCode = async (req, res) => {
 
         const adminPasskey = crypto.randomBytes(12).toString("hex");
 
-        const mailInfo = await SendMail({
+        await SendMail({
             from: process.env.EMAIL_FROM,
             to: normalizedEmail,
             subject: "StudStore Admin Passkey",
@@ -261,7 +296,7 @@ exports.adminVerifyVerificationCode = async (req, res) => {
             `
         });
 
-        if (!isEmailAccepted(mailInfo, normalizedEmail)) {
+        if (!SendMail) {
             return res.status(502).json({
                 success: false,
                 message: "The admin passkey email could not be delivered. Please try again."
@@ -391,19 +426,13 @@ exports.AdminLogIn = async (req, res) => {
         res.cookie(
             "adminAuthorization",
             `Bearer ${adminToken}`,
-            {
-                ...adminCookieOptions,
-                maxAge: 4 * 60 * 60 * 1000
-            }
+            authCookieOptions(4 * 60 * 60 * 1000)
         );
 
         res.cookie(
             "adminRefreshToken",
             adminRefreshToken,
-            {
-                ...adminCookieOptions,
-                maxAge: 4 * 24 * 60 * 60 * 1000
-            }
+            authCookieOptions(4 * 24 * 60 * 60 * 1000)
         );
 
         existingAdmin.isLoggedIn = true;
@@ -417,14 +446,18 @@ exports.AdminLogIn = async (req, res) => {
             message: "Logged in successfully"
         });
     } catch (error) {
-        return sendControllerError(res, error, "ADMIN LOGIN ERROR");
+        return sendControllerError(
+            res,
+            error,
+            "ADMIN LOGIN ERROR"
+        );
     }
 };
 
 
 // 4. ADMIN LOGOUT
 // POST /logout
-// Requires ValidateAdminToken
+// Requires admin authentication middleware
 
 exports.AdminLogOut = async (req, res) => {
     try {
@@ -454,6 +487,7 @@ exports.AdminLogOut = async (req, res) => {
         });
     } catch (error) {
         console.error("ADMIN LOGOUT ERROR:", error);
+
         clearAdminCookies(res);
 
         return res.status(500).json({
@@ -466,6 +500,7 @@ exports.AdminLogOut = async (req, res) => {
 
 // 5. REFRESH ADMIN ACCESS TOKEN
 // POST /admin-refresh-token
+// Must NOT require the access-token middleware
 
 exports.GetAdminRefreshToken = async (req, res) => {
     try {
@@ -490,7 +525,10 @@ exports.GetAdminRefreshToken = async (req, res) => {
             refreshSecret
         );
 
-        if (decodedAdmin.tokenType !== "admin-refresh") {
+        if (
+            decodedAdmin.tokenType !== "admin-refresh" ||
+            !decodedAdmin.id
+        ) {
             clearAdminCookies(res);
 
             return res.status(401).json({
@@ -524,10 +562,7 @@ exports.GetAdminRefreshToken = async (req, res) => {
         res.cookie(
             "adminAuthorization",
             `Bearer ${newAccessToken}`,
-            {
-                ...adminCookieOptions,
-                maxAge: 4 * 60 * 60 * 1000
-            }
+            authCookieOptions(4 * 60 * 60 * 1000)
         );
 
         return res.status(200).json({
@@ -536,6 +571,7 @@ exports.GetAdminRefreshToken = async (req, res) => {
         });
     } catch (error) {
         console.error("ADMIN REFRESH ERROR:", error);
+
         clearAdminCookies(res);
 
         return res.status(401).json({
@@ -548,7 +584,7 @@ exports.GetAdminRefreshToken = async (req, res) => {
 
 // 6. CHECK ADMIN AUTHENTICATION
 // GET /admin-check-auth
-// Requires ValidateAdminToken
+// Requires admin authentication middleware
 
 exports.AdminCheckAuth = async (req, res) => {
     try {
@@ -585,4 +621,3 @@ exports.AdminCheckAuth = async (req, res) => {
         );
     }
 };
-
