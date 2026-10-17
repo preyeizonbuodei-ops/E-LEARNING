@@ -13,6 +13,7 @@ const cookieparser = require("cookie-parser");
 const { GeneralRateLimiter } = require("./middlewares/RateLimit");
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middlewares
 app.use(
